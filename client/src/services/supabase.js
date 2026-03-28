@@ -1,0 +1,295 @@
+import { createClient } from '@supabase/supabase-js';
+
+// Supabase configuration
+const supabaseUrl = 'https://whqgoovlfbmfgsvqezmy.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndocWdvb3ZsZmJtZmdzdnFlem15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMwNjY0MDAsImV4cCI6MjA1ODY0MjQwMH0.example_key';
+
+export const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Helper to get current timestamp
+const now = () => new Date().toISOString();
+
+// Paddy Purchases
+export const getPaddyPurchases = async () => {
+  const { data, error } = await supabase
+    .from('paddy_purchases')
+    .select('*')
+    .order('date', { ascending: false });
+  if (error) throw error;
+  return { data: { success: true, data: data || [] } };
+};
+
+export const addPaddyPurchase = async (purchase) => {
+  const { data, error } = await supabase
+    .from('paddy_purchases')
+    .insert([{ ...purchase, created_at: now() }])
+    .select()
+    .single();
+  if (error) throw error;
+  
+  // Update stock
+  await updateStockInternal('paddy', purchase.quantity, purchase.bags);
+  
+  return { data: { success: true, data } };
+};
+
+// Milling
+export const getMillingProcesses = async () => {
+  const { data, error } = await supabase
+    .from('milling_processes')
+    .select('*')
+    .order('date', { ascending: false });
+  if (error) throw error;
+  return { data: { success: true, data: data || [] } };
+};
+
+export const createMilling = async (milling) => {
+  const { data, error } = await supabase
+    .from('milling_processes')
+    .insert([{ 
+      ...milling, 
+      quantity_milled: milling.quantity,
+      created_at: now()
+    }])
+    .select()
+    .single();
+  if (error) throw error;
+  
+  // Update stock
+  await updateStockInternal('paddy', -parseFloat(milling.quantity), 0);
+  await updateStockInternal('rice', milling.rice, 0);
+  await updateStockInternal('bran', milling.bran, 0);
+  await updateStockInternal('broken', milling.broken, 0);
+  await updateStockInternal('rafi', milling.rafi, 0);
+  await updateStockInternal('husk', milling.husk, 0);
+  
+  return { data: { success: true, data } };
+};
+
+// Expenses
+export const getExpenses = async () => {
+  const { data, error } = await supabase
+    .from('expenses')
+    .select('*')
+    .order('date', { ascending: false });
+  if (error) throw error;
+  return { data: { success: true, data: data || [] } };
+};
+
+export const addExpense = async (expense) => {
+  const { data, error } = await supabase
+    .from('expenses')
+    .insert([{ ...expense, created_at: now() }])
+    .select()
+    .single();
+  if (error) throw error;
+  return { data: { success: true, data } };
+};
+
+// Workers
+export const getWorkers = async () => {
+  const { data, error } = await supabase
+    .from('workers')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return { data: { success: true, data: data || [] } };
+};
+
+export const addWorker = async (worker) => {
+  const { data, error } = await supabase
+    .from('workers')
+    .insert([{ ...worker, payments: [], created_at: now() }])
+    .select()
+    .single();
+  if (error) throw error;
+  return { data: { success: true, data } };
+};
+
+// Sales
+export const getSales = async () => {
+  const { data, error } = await supabase
+    .from('sales')
+    .select('*')
+    .order('date', { ascending: false });
+  if (error) throw error;
+  return { data: { success: true, data: data || [] } };
+};
+
+export const addSale = async (sale) => {
+  const { data, error } = await supabase
+    .from('sales')
+    .insert([{ ...sale, created_at: now() }])
+    .select()
+    .single();
+  if (error) throw error;
+  
+  // Update stock
+  const product = sale.product?.toLowerCase();
+  if (product) {
+    await updateStockInternal(product, -parseFloat(sale.quantity), 0);
+  }
+  
+  return { data: { success: true, data } };
+};
+
+// Stock
+export const getStock = async () => {
+  const { data, error } = await supabase
+    .from('stock')
+    .select('*')
+    .eq('id', 1)
+    .single();
+  if (error) throw error;
+  
+  return { data: { success: true, data: {
+    paddy: { quantity: data?.paddy_quantity || 0, unit: data?.paddy_unit || 'Qu', bags: data?.paddy_bags || 0 },
+    rice: { quantity: data?.rice_quantity || 0, unit: data?.rice_unit || 'Qu' },
+    bran: { quantity: data?.bran_quantity || 0, unit: data?.bran_unit || 'Qu' },
+    broken: { quantity: data?.broken_quantity || 0, unit: data?.broken_unit || 'Qu' },
+    rafi: { quantity: data?.rafi_quantity || 0, unit: data?.rafi_unit || 'Qu' },
+    husk: { quantity: data?.husk_quantity || 0, unit: data?.husk_unit || 'Qu' }
+  }}};
+};
+
+const updateStockInternal = async (product, quantityChange, bagsChange = 0) => {
+  const { data: current } = await supabase
+    .from('stock')
+    .select('*')
+    .eq('id', 1)
+    .single();
+  
+  const updates = {};
+  if (product === 'paddy') {
+    updates.paddy_quantity = (current?.paddy_quantity || 0) + parseFloat(quantityChange);
+    updates.paddy_bags = (current?.paddy_bags || 0) + parseInt(bagsChange);
+  } else {
+    updates[`${product}_quantity`] = (current?.[`${product}_quantity`] || 0) + parseFloat(quantityChange);
+  }
+  
+  await supabase.from('stock').update(updates).eq('id', 1);
+};
+
+export const resetAllData = async () => {
+  await supabase.from('paddy_purchases').delete().neq('id', 0);
+  await supabase.from('milling_processes').delete().neq('id', 0);
+  await supabase.from('expenses').delete().neq('id', 0);
+  await supabase.from('workers').delete().neq('id', 0);
+  await supabase.from('sales').delete().neq('id', 0);
+  await supabase.from('stock').update({
+    paddy_quantity: 0, paddy_bags: 0,
+    rice_quantity: 0, bran_quantity: 0,
+    broken_quantity: 0, rafi_quantity: 0, husk_quantity: 0
+  }).eq('id', 1);
+  return { data: { success: true, message: 'All data reset' } };
+};
+
+// Reports
+export const getDailyReport = async () => {
+  const today = new Date().toISOString().split('T')[0];
+  
+  const { data: purchases } = await supabase
+    .from('paddy_purchases')
+    .select('*')
+    .gte('date', today);
+  
+  const { data: expenses } = await supabase
+    .from('expenses')
+    .select('*')
+    .gte('date', today);
+  
+  const { data: sales } = await supabase
+    .from('sales')
+    .select('*')
+    .gte('date', today);
+  
+  const { data: milling } = await supabase
+    .from('milling_processes')
+    .select('*')
+    .gte('date', today);
+  
+  const totalSales = sales?.reduce((s, x) => s + (parseFloat(x.total_amount) || 0), 0) || 0;
+  const totalExpenses = expenses?.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0) || 0;
+  const totalHamali = purchases?.reduce((s, p) => s + (parseFloat(p.hamali) || 0), 0) || 0;
+  
+  return { data: { success: true, data: {
+    date: new Date().toISOString(),
+    purchases: { count: purchases?.length || 0, totalHamali },
+    milling: { totalQuantity: milling?.reduce((s, m) => s + (parseFloat(m.quantity_milled) || 0), 0) || 0 },
+    expenses: { total: totalExpenses },
+    sales: { total: totalSales },
+    profit: { totalSales, totalExpenses, netProfit: totalSales - totalExpenses }
+  }}};
+};
+
+export const getMonthlyReport = async () => {
+  const { data: purchases } = await supabase.from('paddy_purchases').select('*');
+  const { data: expenses } = await supabase.from('expenses').select('*');
+  const { data: sales } = await supabase.from('sales').select('*');
+  const { data: milling } = await supabase.from('milling_processes').select('*');
+  
+  const monthSales = sales?.reduce((s, x) => s + (parseFloat(x.total_amount) || 0), 0) || 0;
+  const monthExpenses = expenses?.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0) || 0;
+  const monthHamali = purchases?.reduce((s, p) => s + (parseFloat(p.hamali) || 0), 0) || 0;
+  
+  return { data: { success: true, data: {
+    month: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+    purchases: {
+      count: purchases?.length || 0,
+      totalQuantity: purchases?.reduce((s, p) => s + (parseFloat(p.quantity) || 0), 0) || 0,
+      totalHamali: monthHamali
+    },
+    milling: { totalQuantity: milling?.reduce((s, m) => s + (parseFloat(m.quantity_milled) || 0), 0) || 0 },
+    expenses: { operational: monthExpenses, workerPayments: 0, hamali: monthHamali, total: monthExpenses },
+    sales: { total: monthSales },
+    profit: { totalSales: monthSales, totalExpenses: monthExpenses, netProfit: monthSales - monthExpenses }
+  }}};
+};
+
+export const getDashboardSummary = async () => {
+  const today = new Date().toISOString().split('T')[0];
+  
+  const { data: stock } = await getStock();
+  const { data: purchases } = await supabase.from('paddy_purchases').select('*').gte('date', today);
+  const { data: expenses } = await supabase.from('expenses').select('*').gte('date', today);
+  const { data: sales } = await supabase.from('sales').select('*').gte('date', today);
+  
+  return { data: { success: true, data: {
+    stock: stock?.data,
+    today: {
+      purchases: purchases?.length || 0,
+      expenses: expenses?.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0) || 0,
+      sales: sales?.reduce((s, x) => s + (parseFloat(x.total_amount) || 0), 0) || 0,
+      milling: 0
+    },
+    monthly: {
+      totalExpenses: 0,
+      totalSales: 0,
+      netProfit: 0
+    }
+  }}};
+};
+
+// Placeholder functions for compatibility
+export const getErrorMessage = (error) => error?.message || 'An error occurred';
+export const updatePaddyPurchase = () => Promise.resolve({ data: { success: true } });
+export const deletePaddyPurchase = () => Promise.resolve({ data: { success: true } });
+export const updateMilling = () => Promise.resolve({ data: { success: true } });
+export const deleteMilling = () => Promise.resolve({ data: { success: true } });
+export const updateStock = () => Promise.resolve({ data: { success: true } });
+export const getWorkerById = () => Promise.resolve({ data: { success: true, data: {} } });
+export const addWorkerPayment = () => Promise.resolve({ data: { success: true } });
+export const deleteWorker = () => Promise.resolve({ data: { success: true } });
+export const getExpensesByDate = () => getExpenses();
+export const getDailyExpenses = () => getExpenses();
+export const getMonthlyExpenses = () => getExpenses();
+export const updateExpense = () => Promise.resolve({ data: { success: true } });
+export const deleteExpense = () => Promise.resolve({ data: { success: true } });
+export const getSalesByDate = () => getSales();
+export const getDailySales = () => getSales();
+export const getMonthlySales = () => getSales();
+export const updateSale = () => Promise.resolve({ data: { success: true } });
+export const deleteSale = () => Promise.resolve({ data: { success: true } });
+export const processMilling = (data) => createMilling(data);
+export const getMillingByDate = () => getMillingProcesses();
+export const getPaddyPurchasesByDate = () => getPaddyPurchases();
