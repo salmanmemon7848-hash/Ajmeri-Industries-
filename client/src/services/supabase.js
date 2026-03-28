@@ -22,6 +22,9 @@ export const getPaddyPurchases = async () => {
     _id: item.id,
     farmerName: item.farmer_name,
     quantity: item.quantity,
+    newQuantity: item.new_quantity,
+    oldQuantity: item.old_quantity,
+    totalQuantity: item.total_quantity,
     bags: item.bags,
     bagType: item.bag_type,
     hamali: item.hamali,
@@ -42,16 +45,19 @@ export const addPaddyPurchase = async (purchase) => {
   // Transform camelCase to snake_case for database
   const dbPurchase = {
     farmer_name: purchase.farmerName,
-    quantity: purchase.quantity,
+    quantity: purchase.totalQuantity || purchase.quantity,
+    new_quantity: purchase.newQuantity,
+    old_quantity: purchase.oldQuantity,
+    total_quantity: purchase.totalQuantity,
     bags: purchase.bags,
     bag_type: purchase.bagType,
     hamali: purchase.hamali,
-    weigher_fees: purchase.weigherFees,
-    transportation: purchase.transportation,
-    other_expenses: purchase.otherExpenses,
+    weigher_fees: purchase.weigherFees || 0,
+    transportation: purchase.transportation || 0,
+    other_expenses: purchase.otherExpenses || 0,
     total_amount: purchase.totalAmount,
-    price_per_quintal: purchase.pricePerQuintal,
-    quality: purchase.quality,
+    price_per_quintal: purchase.pricePerQuintal || 0,
+    quality: purchase.quality || 'Good',
     date: purchase.date,
     created_at: now()
   };
@@ -64,7 +70,7 @@ export const addPaddyPurchase = async (purchase) => {
   if (error) throw error;
   
   // Update stock
-  await updateStockInternal('paddy', purchase.quantity, purchase.bags);
+  await updateStockInternal('paddy', purchase.totalQuantity || purchase.quantity, purchase.bags);
   
   return { data: { success: true, data } };
 };

@@ -34,12 +34,38 @@ const MillingEntry = () => {
     }
   };
 
+  // Auto-calculate milling outputs based on quantity
+  const calculateOutputs = (quantity) => {
+    const qty = parseFloat(quantity) || 0;
+    return {
+      rice: (qty * 0.55).toFixed(2),      // 55%
+      broken: (qty * 0.10).toFixed(2),    // 10%
+      rafi: (qty * 0.01).toFixed(2),      // 1%
+      husk: (qty * 0.20).toFixed(2),      // 20%
+      wastage: (qty * 0.06).toFixed(2),   // 6%
+      bran: (qty * 0.08).toFixed(2)       // Remaining ~8%
+    };
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    setFormData(prev => {
+      const newData = { ...prev, [name]: value };
+      
+      // Auto-calculate when quantity changes
+      if (name === 'quantity' && value) {
+        const outputs = calculateOutputs(value);
+        newData.rice = outputs.rice;
+        newData.broken = outputs.broken;
+        newData.rafi = outputs.rafi;
+        newData.husk = outputs.husk;
+        newData.bran = outputs.bran;
+      }
+      
+      return newData;
+    });
+    
     if (messageType === 'error') {
       setMessage('');
       setMessageType('');
@@ -178,8 +204,25 @@ const MillingEntry = () => {
                 </div>
               </div>
 
+              {/* Auto-calculation Info */}
+              {formData.quantity && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                  <div className="text-sm text-green-700">
+                    <span className="font-semibold">Auto-calculated from {formData.quantity} Qu:</span>
+                    <div className="grid grid-cols-3 gap-2 mt-2 text-xs">
+                      <span>Rice: 55%</span>
+                      <span>Broken: 10%</span>
+                      <span>Rafi: 1%</span>
+                      <span>Husk: 20%</span>
+                      <span>Bran: 8%</span>
+                      <span>Wastage: 6%</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="border-t pt-4">
-                <h4 className="font-medium text-gray-700 mb-3">Output Products</h4>
+                <h4 className="font-medium text-gray-700 mb-3">Output Products (Auto-calculated)</h4>
                 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
