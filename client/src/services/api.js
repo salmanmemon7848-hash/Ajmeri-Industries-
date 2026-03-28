@@ -104,18 +104,10 @@ const localDB = {
   simulateResponse: (data) => ({ data: { success: true, data } })
 };
 
-// API call with fallback to local storage
+// API call - always use local storage (no server needed for Vercel)
 const apiCall = async (method, url, data = null) => {
-  try {
-    const response = data 
-      ? await api[method](url, data)
-      : await api[method](url);
-    return response;
-  } catch (error) {
-    // If server fails, use local storage
-    console.log('Server unavailable, using local storage');
-    return handleLocalRequest(url, method, data);
-  }
+  // Always use local storage - works offline and on Vercel
+  return handleLocalRequest(url, method, data);
 };
 
 // Handle requests locally
