@@ -76,17 +76,42 @@ export const getMillingProcesses = async () => {
     .select('*')
     .order('date', { ascending: false });
   if (error) throw error;
-  return { data: { success: true, data: data || [] } };
+  
+  // Transform snake_case to camelCase for frontend
+  const transformedData = (data || []).map(item => ({
+    _id: item.id,
+    quantity: item.quantity || item.quantity_milled,
+    rice: item.rice,
+    bran: item.bran,
+    broken: item.broken,
+    rafi: item.rafi,
+    husk: item.husk,
+    unit: item.unit,
+    date: item.date,
+    createdAt: item.created_at
+  }));
+  
+  return { data: { success: true, data: transformedData } };
 };
 
 export const createMilling = async (milling) => {
+  // Transform camelCase to snake_case for database
+  const dbMilling = {
+    quantity: milling.quantity,
+    quantity_milled: milling.quantity,
+    rice: milling.rice,
+    bran: milling.bran,
+    broken: milling.broken,
+    rafi: milling.rafi,
+    husk: milling.husk,
+    unit: milling.unit,
+    date: milling.date,
+    created_at: now()
+  };
+  
   const { data, error } = await supabase
     .from('milling_processes')
-    .insert([{ 
-      ...milling, 
-      quantity_milled: milling.quantity,
-      created_at: now()
-    }])
+    .insert([dbMilling])
     .select()
     .single();
   if (error) throw error;
@@ -109,13 +134,33 @@ export const getExpenses = async () => {
     .select('*')
     .order('date', { ascending: false });
   if (error) throw error;
-  return { data: { success: true, data: data || [] } };
+  
+  // Transform snake_case to camelCase for frontend
+  const transformedData = (data || []).map(item => ({
+    _id: item.id,
+    category: item.category,
+    description: item.description,
+    amount: item.amount,
+    date: item.date,
+    createdAt: item.created_at
+  }));
+  
+  return { data: { success: true, data: transformedData } };
 };
 
 export const addExpense = async (expense) => {
+  // Transform camelCase to snake_case for database
+  const dbExpense = {
+    category: expense.category,
+    description: expense.description,
+    amount: expense.amount,
+    date: expense.date,
+    created_at: now()
+  };
+  
   const { data, error } = await supabase
     .from('expenses')
-    .insert([{ ...expense, created_at: now() }])
+    .insert([dbExpense])
     .select()
     .single();
   if (error) throw error;
@@ -129,13 +174,37 @@ export const getWorkers = async () => {
     .select('*')
     .order('created_at', { ascending: false });
   if (error) throw error;
-  return { data: { success: true, data: data || [] } };
+  
+  // Transform snake_case to camelCase for frontend
+  const transformedData = (data || []).map(item => ({
+    _id: item.id,
+    name: item.name,
+    role: item.role,
+    phone: item.phone,
+    address: item.address,
+    dailyWage: item.daily_wage,
+    payments: item.payments || [],
+    createdAt: item.created_at
+  }));
+  
+  return { data: { success: true, data: transformedData } };
 };
 
 export const addWorker = async (worker) => {
+  // Transform camelCase to snake_case for database
+  const dbWorker = {
+    name: worker.name,
+    role: worker.role,
+    phone: worker.phone,
+    address: worker.address,
+    daily_wage: worker.dailyWage,
+    payments: worker.payments || [],
+    created_at: now()
+  };
+  
   const { data, error } = await supabase
     .from('workers')
-    .insert([{ ...worker, payments: [], created_at: now() }])
+    .insert([dbWorker])
     .select()
     .single();
   if (error) throw error;
@@ -149,13 +218,37 @@ export const getSales = async () => {
     .select('*')
     .order('date', { ascending: false });
   if (error) throw error;
-  return { data: { success: true, data: data || [] } };
+  
+  // Transform snake_case to camelCase for frontend
+  const transformedData = (data || []).map(item => ({
+    _id: item.id,
+    buyerName: item.buyer_name,
+    product: item.product,
+    quantity: item.quantity,
+    rate: item.rate,
+    totalAmount: item.total_amount,
+    date: item.date,
+    createdAt: item.created_at
+  }));
+  
+  return { data: { success: true, data: transformedData } };
 };
 
 export const addSale = async (sale) => {
+  // Transform camelCase to snake_case for database
+  const dbSale = {
+    buyer_name: sale.buyerName,
+    product: sale.product,
+    quantity: sale.quantity,
+    rate: sale.rate,
+    total_amount: sale.totalAmount,
+    date: sale.date,
+    created_at: now()
+  };
+  
   const { data, error } = await supabase
     .from('sales')
-    .insert([{ ...sale, created_at: now() }])
+    .insert([dbSale])
     .select()
     .single();
   if (error) throw error;
