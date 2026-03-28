@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { getDashboardSummary, getStock, getErrorMessage, resetAllData } from '../services/api';
+import { getDashboardSummary, getStock, getErrorMessage, resetAllData, getPaddyPurchases, getExpenses, getSales } from '../services/api';
 
 const Dashboard = () => {
   const [summary, setSummary] = useState(null);
@@ -26,57 +26,56 @@ const Dashboard = () => {
     // Always stop loading first to prevent stuck loading screen
     setLoading(false);
     
-    // Try to use cache first for instant loading
-    try {
-      const cachedData = localStorage.getItem('dashboardCache');
-      const cachedTime = localStorage.getItem('dashboardCacheTime');
-      
-      if (cachedData) {
-        const parsed = JSON.parse(cachedData);
-        setSummary(parsed.summary);
-        setStock(parsed.stock);
-        if (cachedTime) {
-          setLastUpdated(new Date(parseInt(cachedTime)));
-        }
-        
-        // If cache is fresh and not forcing refresh, skip API call
-        if (!forceRefresh && cachedTime) {
-          const age = Date.now() - parseInt(cachedTime);
-          if (age < CACHE_DURATION) {
-            return;
-          }
-        }
-      }
-    } catch (e) {
-      console.error('Cache error:', e);
-    }
-
-    // Fetch fresh data in background
+    // Fetch fresh data directly from API (which uses localStorage)
     try {
       setError(null);
       
-      const [summaryRes, stockRes] = await Promise.all([
-        getDashboardSummary(),
+      const [paddyRes, expensesRes, salesRes, stockRes] = await Promise.all([
+        getPaddyPurchases(),
+        getExpenses(),
+        getSales(),
         getStock()
       ]);
       
-      const summaryData = summaryRes.data?.data || {};
+      const paddyData = paddyRes.data?.data || [];
+      const expensesData = expensesRes.data?.data || [];
+      const salesData = salesRes.data?.data || [];
       const stockData = stockRes.data?.data || {};
+      
+      // Calculate today's data
+      const today = new Date().toDateString();
+      const todayPurchases = paddyData.filter(p => new Date(p.date).toDateString() === today).length;
+      const todayExpenses = expensesData
+        .filter(e => new Date(e.date).toDateString() === today)
+        .reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+      const todaySales = salesData
+        .filter(s => new Date(s.date).toDateString() === today)
+        .reduce((sum, s) => sum + (parseFloat(s.totalAmount) || 0), 0);
+      
+      // Calculate monthly data
+      const monthlyExpenses = expensesData.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+      const monthlySales = salesData.reduce((sum, s) => sum + (parseFloat(s.totalAmount) || 0), 0);
+      
+      const summaryData = {
+        today: {
+          purchases: todayPurchases,
+          expenses: todayExpenses,
+          sales: todaySales,
+          milling: 0
+        },
+        monthly: {
+          totalExpenses: monthlyExpenses,
+          totalSales: monthlySales,
+          netProfit: monthlySales - monthlyExpenses
+        }
+      };
       
       setSummary(summaryData);
       setStock(stockData);
       setLastUpdated(new Date());
-      
-      // Update cache
-      localStorage.setItem('dashboardCache', JSON.stringify({
-        summary: summaryData,
-        stock: stockData
-      }));
-      localStorage.setItem('dashboardCacheTime', Date.now().toString());
     } catch (error) {
       console.error('Error fetching data:', error);
-      setError('Failed to fetch latest data. Showing cached data.');
-      // Silent fail - already showing cached data or empty state
+      setError('Failed to fetch data.');
     }
   }, []);
 
