@@ -175,6 +175,76 @@ const handleRequest = async (endpoint, method, requestData = null) => {
       }
       break;
       
+    case '/reports/daily':
+      if (method === 'get') {
+        const today = new Date().toDateString();
+        const todayPurchases = db.paddyPurchases.filter(p => new Date(p.date).toDateString() === today);
+        const todayExpenses = db.expenses.filter(e => new Date(e.date).toDateString() === today);
+        const todaySales = db.sales.filter(s => new Date(s.date).toDateString() === today);
+        const todayMilling = db.millingProcesses.filter(m => new Date(m.date).toDateString() === today);
+        
+        const totalSales = todaySales.reduce((s, x) => s + (parseFloat(x.totalAmount) || 0), 0);
+        const totalExpenses = todayExpenses.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+        const totalHamali = todayPurchases.reduce((s, p) => s + (parseFloat(p.hamali) || 0), 0);
+        
+        return simulateResponse({
+          date: new Date().toISOString(),
+          purchases: {
+            count: todayPurchases.length,
+            totalHamali: totalHamali
+          },
+          milling: {
+            totalQuantity: todayMilling.reduce((s, m) => s + (parseFloat(m.quantityMilled) || 0), 0)
+          },
+          expenses: {
+            total: totalExpenses
+          },
+          sales: {
+            total: totalSales
+          },
+          profit: {
+            totalSales: totalSales,
+            totalExpenses: totalExpenses,
+            netProfit: totalSales - totalExpenses
+          }
+        });
+      }
+      break;
+      
+    case '/reports/monthly':
+      if (method === 'get') {
+        const monthExpenses = db.expenses.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+        const monthSales = db.sales.reduce((s, x) => s + (parseFloat(x.totalAmount) || 0), 0);
+        const monthHamali = db.paddyPurchases.reduce((s, p) => s + (parseFloat(p.hamali) || 0), 0);
+        
+        return simulateResponse({
+          month: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+          purchases: {
+            count: db.paddyPurchases.length,
+            totalQuantity: db.paddyPurchases.reduce((s, p) => s + (parseFloat(p.quantity) || 0), 0),
+            totalHamali: monthHamali
+          },
+          milling: {
+            totalQuantity: db.millingProcesses.reduce((s, m) => s + (parseFloat(m.quantityMilled) || 0), 0)
+          },
+          expenses: {
+            operational: monthExpenses,
+            workerPayments: 0,
+            hamali: monthHamali,
+            total: monthExpenses
+          },
+          sales: {
+            total: monthSales
+          },
+          profit: {
+            totalSales: monthSales,
+            totalExpenses: monthExpenses,
+            netProfit: monthSales - monthExpenses
+          }
+        });
+      }
+      break;
+      
     case '/reports/dashboard':
       if (method === 'get') {
         const today = new Date().toDateString();
@@ -248,8 +318,8 @@ export const updateSale = () => Promise.resolve({ data: { success: true } });
 export const deleteSale = () => Promise.resolve({ data: { success: true } });
 
 // Report APIs
-export const getDailyReport = () => apiCall('get', '/expenses');
-export const getMonthlyReport = () => Promise.resolve({ data: { success: true, data: {} } });
+export const getDailyReport = () => apiCall('get', '/reports/daily');
+export const getMonthlyReport = () => apiCall('get', '/reports/monthly');
 export const getDashboardSummary = () => apiCall('get', '/reports/dashboard');
 
 export default { get: () => {}, post: () => {}, put: () => {}, delete: () => {} };
