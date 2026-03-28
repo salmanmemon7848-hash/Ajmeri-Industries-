@@ -7,11 +7,11 @@ const SalesEntry = () => {
   const [stock, setStock] = useState(null);
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
-    productType: 'Rice',
+    product: 'Rice',
     quantity: '',
     unit: 'Qu',
-    price: '',
-    customerName: ''
+    rate: '',
+    buyerName: ''
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -44,8 +44,8 @@ const SalesEntry = () => {
       const newData = { ...prev, [name]: value };
       
       // Calculate total amount
-      if ((name === 'quantity' || name === 'price') && newData.quantity && newData.price) {
-        setTotalAmount(parseFloat(newData.quantity) * parseFloat(newData.price));
+      if ((name === 'quantity' || name === 'rate') && newData.quantity && newData.rate) {
+        setTotalAmount(parseFloat(newData.quantity) * parseFloat(newData.rate));
       }
       
       return newData;
@@ -63,7 +63,7 @@ const SalesEntry = () => {
     const dataToSubmit = pendingData || {
       ...formData,
       quantity: parseFloat(formData.quantity),
-      price: parseFloat(formData.price),
+      rate: parseFloat(formData.rate),
       totalAmount
     };
 
@@ -103,13 +103,13 @@ const SalesEntry = () => {
 
   const getAvailableStock = () => {
     if (!stock) return 0;
-    const key = formData.productType.toLowerCase();
+    const key = formData.product.toLowerCase();
     return stock[key]?.quantity || 0;
   };
 
   const getStockUnit = () => {
     if (!stock) return 'Qu';
-    const key = formData.productType.toLowerCase();
+    const key = formData.product.toLowerCase();
     return stock[key]?.unit || 'Qu';
   };
 
@@ -122,7 +122,7 @@ const SalesEntry = () => {
 
       {/* Available Stock Info */}
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-        <div className="text-sm text-yellow-600 mb-1">Available {formData.productType} Stock</div>
+        <div className="text-sm text-yellow-600 mb-1">Available {formData.product} Stock</div>
         <div className="text-2xl font-bold text-yellow-800">
           {availableStock} {stockUnit}
         </div>
@@ -169,8 +169,8 @@ const SalesEntry = () => {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Product Type</label>
           <select
-            name="productType"
-            value={formData.productType}
+            name="product"
+            value={formData.product}
             onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
             required
@@ -214,13 +214,13 @@ const SalesEntry = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Price per {formData.unit} (₹)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Rate per {formData.unit} (₹)</label>
           <input
             type="number"
-            name="price"
-            value={formData.price}
+            name="rate"
+            value={formData.rate}
             onChange={handleChange}
-            placeholder="Enter price"
+            placeholder="Enter rate"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
             required
             min="0"
@@ -229,14 +229,15 @@ const SalesEntry = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name (Optional)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Buyer Name</label>
           <input
             type="text"
-            name="customerName"
-            value={formData.customerName}
+            name="buyerName"
+            value={formData.buyerName}
             onChange={handleChange}
-            placeholder="Enter customer name"
+            placeholder="Enter buyer name"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            required
           />
         </div>
 
