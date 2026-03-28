@@ -39,7 +39,9 @@ import {
   deleteSale,
   processMilling,
   getMillingByDate,
-  getPaddyPurchasesByDate
+  getPaddyPurchasesByDate,
+  addPurchase,
+  getPurchases
 } from './supabase';
 
 // Re-export everything
@@ -81,7 +83,9 @@ export {
   deleteSale,
   processMilling,
   getMillingByDate,
-  getPaddyPurchasesByDate
+  getPaddyPurchasesByDate,
+  addPurchase,
+  getPurchases
 };
 
 export default { get: () => {}, post: () => {}, put: () => {}, delete: () => {} };

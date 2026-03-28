@@ -4,6 +4,7 @@ import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Stock from './pages/Stock';
 import PaddyEntry from './pages/PaddyEntry';
+import PurchaseEntry from './pages/PurchaseEntry';
 import MillingEntry from './pages/MillingEntry';
 import ExpenseEntry from './pages/ExpenseEntry';
 import WorkerEntry from './pages/WorkerEntry';
@@ -19,6 +20,7 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="stock" element={<Stock />} />
             <Route path="paddy-entry" element={<PaddyEntry />} />
+            <Route path="purchase-entry" element={<PurchaseEntry />} />
             <Route path="milling-entry" element={<MillingEntry />} />
             <Route path="expense-entry" element={<ExpenseEntry />} />
             <Route path="worker-entry" element={<WorkerEntry />} />

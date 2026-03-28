@@ -217,6 +217,64 @@ export const addWorker = async (worker) => {
   return { data: { success: true, data } };
 };
 
+// Purchases (Unified)
+export const addPurchase = async (purchase) => {
+  const dbPurchase = {
+    type: purchase.type,
+    date: purchase.date,
+    supplier_name: purchase.supplierName,
+    quantity: purchase.quantity,
+    rate: purchase.rate,
+    total_amount: purchase.totalAmount,
+    rice_mill_hamali: purchase.riceMillHamali,
+    warehouse_hamali: purchase.warehouseHamali,
+    total_hamali: purchase.totalHamali,
+    notes: purchase.notes,
+    created_at: now()
+  };
+  
+  const { data, error } = await supabase
+    .from('purchases')
+    .insert([dbPurchase])
+    .select()
+    .single();
+  if (error) throw error;
+  
+  // Update stock based on type
+  if (purchase.type === 'paddy') {
+    await updateStockInternal('paddy', purchase.quantity, 0);
+  } else if (purchase.type === 'rice') {
+    await updateStockInternal('rice', purchase.quantity, 0);
+  }
+  
+  return { data: { success: true, data } };
+};
+
+export const getPurchases = async (type = null) => {
+  let query = supabase.from('purchases').select('*').order('date', { ascending: false });
+  if (type) query = query.eq('type', type);
+  
+  const { data, error } = await query;
+  if (error) throw error;
+  
+  const transformedData = (data || []).map(item => ({
+    _id: item.id,
+    type: item.type,
+    date: item.date,
+    supplierName: item.supplier_name,
+    quantity: item.quantity,
+    rate: item.rate,
+    totalAmount: item.total_amount,
+    riceMillHamali: item.rice_mill_hamali,
+    warehouseHamali: item.warehouse_hamali,
+    totalHamali: item.total_hamali,
+    notes: item.notes,
+    createdAt: item.created_at
+  }));
+  
+  return { data: { success: true, data: transformedData } };
+};
+
 // Sales
 export const getSales = async () => {
   const { data, error } = await supabase

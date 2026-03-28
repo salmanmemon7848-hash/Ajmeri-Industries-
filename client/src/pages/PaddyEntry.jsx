@@ -15,9 +15,13 @@ const PaddyEntry = () => {
     farmerName: '',
     newQuantity: '',
     oldQuantity: '',
-    hamali: '',
+    riceMillHamali: '',
+    warehouseHamali: '',
     totalAmount: ''
   });
+
+  // Calculate total hamali
+  const totalHamali = (parseFloat(formData.riceMillHamali) || 0) + (parseFloat(formData.warehouseHamali) || 0);
 
   // Calculate total paddy
   const totalPaddy = (parseFloat(formData.newQuantity) || 0) + (parseFloat(formData.oldQuantity) || 0);
@@ -53,7 +57,8 @@ const PaddyEntry = () => {
       farmerName: '',
       newQuantity: '',
       oldQuantity: '',
-      hamali: '',
+      riceMillHamali: '',
+      warehouseHamali: '',
       totalAmount: ''
     });
     setEditingId(null);
@@ -74,9 +79,11 @@ const PaddyEntry = () => {
       newQuantity: parseFloat(formData.newQuantity) || 0,
       oldQuantity: parseFloat(formData.oldQuantity) || 0,
       totalQuantity: totalPaddy,
-      hamali: parseFloat(formData.hamali) || 0,
+      riceMillHamali: parseFloat(formData.riceMillHamali) || 0,
+      warehouseHamali: parseFloat(formData.warehouseHamali) || 0,
+      totalHamali: totalHamali,
       totalAmount: parseFloat(formData.totalAmount) || 0,
-      bags: Math.ceil(totalPaddy / 5), // Approximate bags
+      bags: Math.ceil(totalPaddy / 5),
       bagType: 'Mixed'
     };
 
@@ -106,7 +113,8 @@ const PaddyEntry = () => {
       farmerName: entry.farmerName || '',
       newQuantity: entry.newQuantity || '',
       oldQuantity: entry.oldQuantity || '',
-      hamali: entry.hamali || '',
+      riceMillHamali: entry.riceMillHamali || '',
+      warehouseHamali: entry.warehouseHamali || '',
       totalAmount: entry.totalAmount || ''
     });
     window.scrollTo(0, 0);
@@ -214,31 +222,51 @@ const PaddyEntry = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* Dual Hamali Fields */}
+          <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Hamali (₹)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Rice Mill Hamali (₹)</label>
               <input
                 type="number"
-                name="hamali"
-                value={formData.hamali}
+                name="riceMillHamali"
+                value={formData.riceMillHamali}
                 onChange={handleChange}
-                placeholder="Enter hamali"
+                placeholder="0"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                 min="0"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Total Amount (₹)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Samiti + Warehouse Hamali (₹)</label>
               <input
                 type="number"
-                name="totalAmount"
-                value={formData.totalAmount}
+                name="warehouseHamali"
+                value={formData.warehouseHamali}
                 onChange={handleChange}
-                placeholder="Enter total amount"
+                placeholder="0"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                 min="0"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Total Hamali (₹)</label>
+              <div className="w-full px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg font-bold text-blue-700">
+                ₹{totalHamali.toFixed(2)}
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Total Amount (₹)</label>
+            <input
+              type="number"
+              name="totalAmount"
+              value={formData.totalAmount}
+              onChange={handleChange}
+              placeholder="Enter total amount"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              min="0"
+            />
           </div>
 
           <div className="flex gap-3">
