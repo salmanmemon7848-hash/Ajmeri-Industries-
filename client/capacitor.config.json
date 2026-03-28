@@ -1,0 +1,12 @@
+{
+  "appId": "com.ajmeri.ricemill",
+  "appName": "Ajmeri Rice Mill",
+  "webDir": "dist",
+  "server": {
+    "cleartext": true,
+    "allowNavigation": ["*"]
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}

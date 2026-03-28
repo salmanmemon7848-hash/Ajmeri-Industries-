@@ -1,0 +1,22 @@
+{
+  "name": "ajmeri-industries-rice-mill",
+  "version": "1.0.0",
+  "description": "Rice Mill Management System for Ajmeri Industries",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm run dev",
+    "install-all": "npm install && cd server && npm install && cd ../client && npm install"
+  },
+  "keywords": [
+    "rice-mill",
+    "management",
+    "inventory"
+  ],
+  "author": "Ajmeri Industries",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
