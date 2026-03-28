@@ -16,13 +16,49 @@ export const getPaddyPurchases = async () => {
     .select('*')
     .order('date', { ascending: false });
   if (error) throw error;
-  return { data: { success: true, data: data || [] } };
+  
+  // Transform snake_case to camelCase for frontend
+  const transformedData = (data || []).map(item => ({
+    _id: item.id,
+    farmerName: item.farmer_name,
+    quantity: item.quantity,
+    bags: item.bags,
+    bagType: item.bag_type,
+    hamali: item.hamali,
+    weigherFees: item.weigher_fees,
+    transportation: item.transportation,
+    otherExpenses: item.other_expenses,
+    totalAmount: item.total_amount,
+    pricePerQuintal: item.price_per_quintal,
+    quality: item.quality,
+    date: item.date,
+    createdAt: item.created_at
+  }));
+  
+  return { data: { success: true, data: transformedData } };
 };
 
 export const addPaddyPurchase = async (purchase) => {
+  // Transform camelCase to snake_case for database
+  const dbPurchase = {
+    farmer_name: purchase.farmerName,
+    quantity: purchase.quantity,
+    bags: purchase.bags,
+    bag_type: purchase.bagType,
+    hamali: purchase.hamali,
+    weigher_fees: purchase.weigherFees,
+    transportation: purchase.transportation,
+    other_expenses: purchase.otherExpenses,
+    total_amount: purchase.totalAmount,
+    price_per_quintal: purchase.pricePerQuintal,
+    quality: purchase.quality,
+    date: purchase.date,
+    created_at: now()
+  };
+  
   const { data, error } = await supabase
     .from('paddy_purchases')
-    .insert([{ ...purchase, created_at: now() }])
+    .insert([dbPurchase])
     .select()
     .single();
   if (error) throw error;
