@@ -8,7 +8,7 @@ const PaddyEntry = () => {
     date: new Date().toISOString().split('T')[0],
     bags: '',
     bagType: 'New',
-    source: '',
+    farmerName: '',
     hamali: '',
     quantity: '',
     unit: 'Qu'
@@ -153,13 +153,13 @@ const PaddyEntry = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Source (Mandi/Supplier)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Farmer Name / Source</label>
           <input
             type="text"
-            name="source"
-            value={formData.source}
+            name="farmerName"
+            value={formData.farmerName}
             onChange={handleChange}
-            placeholder="Enter source name"
+            placeholder="Enter farmer name or source"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
             required
           />
