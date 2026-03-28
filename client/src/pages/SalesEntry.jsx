@@ -11,7 +11,8 @@ const SalesEntry = () => {
     quantity: '',
     unit: 'Qu',
     rate: '',
-    buyerName: ''
+    buyerName: '',
+    description: ''
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -238,6 +239,18 @@ const SalesEntry = () => {
             placeholder="Enter buyer name"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
             required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            placeholder="Enter notes or remarks"
+            rows="3"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
           />
         </div>
 

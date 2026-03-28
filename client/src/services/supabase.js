@@ -291,6 +291,7 @@ export const getSales = async () => {
     quantity: item.quantity,
     rate: item.rate,
     totalAmount: item.total_amount,
+    description: item.description,
     date: item.date,
     createdAt: item.created_at
   }));
@@ -306,6 +307,7 @@ export const addSale = async (sale) => {
     quantity: sale.quantity,
     rate: sale.rate,
     total_amount: sale.totalAmount,
+    description: sale.description,
     date: sale.date,
     created_at: now()
   };

@@ -9,6 +9,7 @@ const PaddyEntry = () => {
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
   const [editingId, setEditingId] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
   
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -64,7 +65,7 @@ const PaddyEntry = () => {
     setEditingId(null);
   };
 
-  const handleSubmit = async (e) => {
+  const handlePreview = (e) => {
     e.preventDefault();
     
     if (!formData.newQuantity && !formData.oldQuantity) {
@@ -72,7 +73,11 @@ const PaddyEntry = () => {
       setMessageType('error');
       return;
     }
+    
+    setShowPreview(true);
+  };
 
+  const handleConfirmSave = async () => {
     const dataToSubmit = {
       date: formData.date,
       farmerName: formData.farmerName,
@@ -93,6 +98,7 @@ const PaddyEntry = () => {
 
     try {
       await addPaddyPurchase(dataToSubmit);
+      setShowPreview(false);
       setMessage(editingId ? '✅ Updated successfully!' : '✅ Saved successfully!');
       setMessageType('success');
       resetForm();
@@ -153,7 +159,7 @@ const PaddyEntry = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handlePreview} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
@@ -273,9 +279,9 @@ const PaddyEntry = () => {
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-green-500 text-white py-3 rounded-lg font-medium hover:bg-green-600 disabled:bg-gray-400"
+              className="flex-1 bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600 disabled:bg-gray-400"
             >
-              {loading ? (editingId ? 'Updating...' : 'Saving...') : (editingId ? 'Update Entry' : 'Add Purchase')}
+              Preview Entry
             </button>
             {editingId && (
               <button
@@ -289,6 +295,70 @@ const PaddyEntry = () => {
           </div>
         </form>
       </div>
+
+      {/* Preview Modal */}
+      {showPreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4">Preview Entry</h3>
+            
+            <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Date:</span>
+                <span className="font-medium">{formData.date}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Farmer Name:</span>
+                <span className="font-medium">{formData.farmerName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">New Paddy:</span>
+                <span className="font-medium">{formData.newQuantity || 0} Qu</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Old Paddy:</span>
+                <span className="font-medium">{formData.oldQuantity || 0} Qu</span>
+              </div>
+              <div className="flex justify-between border-t pt-2">
+                <span className="text-gray-800 font-medium">Total Paddy:</span>
+                <span className="font-bold text-green-700">{totalPaddy.toFixed(2)} Qu</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Rice Mill Hamali:</span>
+                <span className="font-medium">₹{formData.riceMillHamali || 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Warehouse Hamali:</span>
+                <span className="font-medium">₹{formData.warehouseHamali || 0}</span>
+              </div>
+              <div className="flex justify-between border-t pt-2">
+                <span className="text-gray-800 font-medium">Total Hamali:</span>
+                <span className="font-bold text-blue-700">₹{totalHamali.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between border-t pt-2">
+                <span className="text-gray-800 font-medium">Total Amount:</span>
+                <span className="font-bold text-green-700">₹{formData.totalAmount || 0}</span>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowPreview(false)}
+                className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400"
+              >
+                Edit Back
+              </button>
+              <button
+                onClick={handleConfirmSave}
+                disabled={loading}
+                className="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 disabled:bg-gray-400"
+              >
+                {loading ? 'Saving...' : 'Confirm & Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Entries List */}
       <div className="bg-white rounded-lg shadow p-6">

@@ -47,6 +47,10 @@ const MillingEntry = () => {
     };
   };
 
+  // Calculate wastage percentage and amount
+  const wastagePercent = 6;
+  const wastageAmount = (parseFloat(formData.quantity) || 0) * (wastagePercent / 100);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     
@@ -216,6 +220,21 @@ const MillingEntry = () => {
                       <span>Husk: 20%</span>
                       <span>Bran: 8%</span>
                       <span>Wastage: 6%</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Wastage Display */}
+              {formData.quantity && (
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <span className="text-sm font-medium text-orange-800">Wastage ({wastagePercent}%)</span>
+                      <div className="text-xs text-orange-600">Auto-calculated</div>
+                    </div>
+                    <div className="text-xl font-bold text-orange-700">
+                      {wastageAmount.toFixed(2)} Qu
                     </div>
                   </div>
                 </div>
