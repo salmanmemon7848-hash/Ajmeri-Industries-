@@ -475,7 +475,35 @@ export const updateMilling = () => Promise.resolve({ data: { success: true } });
 export const deleteMilling = () => Promise.resolve({ data: { success: true } });
 export const updateStock = () => Promise.resolve({ data: { success: true } });
 export const getWorkerById = () => Promise.resolve({ data: { success: true, data: {} } });
-export const addWorkerPayment = () => Promise.resolve({ data: { success: true } });
+export const addWorkerPayment = async (workerId, payment) => {
+  // Get current worker
+  const { data: worker, error: fetchError } = await supabase
+    .from('workers')
+    .select('payments')
+    .eq('id', workerId)
+    .single();
+  
+  if (fetchError) throw fetchError;
+  
+  // Add new payment to the array
+  const currentPayments = worker?.payments || [];
+  const newPayment = {
+    date: payment.date,
+    amount: payment.amount,
+    type: payment.type,
+    created_at: now()
+  };
+  const updatedPayments = [...currentPayments, newPayment];
+  
+  // Update worker with new payments array
+  const { error: updateError } = await supabase
+    .from('workers')
+    .update({ payments: updatedPayments })
+    .eq('id', workerId);
+  
+  if (updateError) throw updateError;
+  return { data: { success: true } };
+};
 export const deleteWorker = () => Promise.resolve({ data: { success: true } });
 export const getExpensesByDate = () => getExpenses();
 export const getDailyExpenses = () => getExpenses();

@@ -35,6 +35,9 @@ const MillingEntry = () => {
     }
   };
 
+  // Wastage percentage constant
+  const wastagePercent = 6;
+
   // Auto-calculate milling outputs based on quantity
   const calculateOutputs = (quantity) => {
     const qty = parseFloat(quantity) || 0;
