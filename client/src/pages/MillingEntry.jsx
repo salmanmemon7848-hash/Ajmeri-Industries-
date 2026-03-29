@@ -18,7 +18,8 @@ const MillingEntry = () => {
     bran: '',
     broken: '',
     rafi: '',
-    husk: ''
+    husk: '',
+    wastage: ''
   });
 
   useEffect(() => {
@@ -47,8 +48,7 @@ const MillingEntry = () => {
     };
   };
 
-  // Calculate wastage percentage and amount
-  const wastagePercent = 6;
+  // Calculate wastage amount
   const wastageAmount = (parseFloat(formData.quantity) || 0) * (wastagePercent / 100);
 
   const handleChange = (e) => {
@@ -90,7 +90,8 @@ const MillingEntry = () => {
         bran: parseFloat(formData.bran) || 0,
         broken: parseFloat(formData.broken) || 0,
         rafi: parseFloat(formData.rafi) || 0,
-        husk: parseFloat(formData.husk) || 0
+        husk: parseFloat(formData.husk) || 0,
+        wastage: parseFloat(formData.wastage) || wastageAmount
       });
 
       setMessage('✅ Milling entry saved successfully!');
@@ -104,7 +105,8 @@ const MillingEntry = () => {
         bran: '',
         broken: '',
         rafi: '',
-        husk: ''
+        husk: '',
+        wastage: ''
       });
       
       setShowAddForm(false);
@@ -305,6 +307,19 @@ const MillingEntry = () => {
                       onChange={handleChange}
                       placeholder="Husk qty"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">Wastage (6%)</label>
+                    <input
+                      type="number"
+                      name="wastage"
+                      value={formData.wastage}
+                      onChange={handleChange}
+                      placeholder="Wastage qty"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-orange-50"
                       min="0"
                       step="0.01"
                     />

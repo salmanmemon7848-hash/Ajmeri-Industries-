@@ -92,6 +92,7 @@ export const getMillingProcesses = async () => {
     broken: item.broken,
     rafi: item.rafi,
     husk: item.husk,
+    wastage: item.wastage,
     unit: item.unit,
     date: item.date,
     createdAt: item.created_at
@@ -110,6 +111,7 @@ export const createMilling = async (milling) => {
     broken: milling.broken,
     rafi: milling.rafi,
     husk: milling.husk,
+    wastage: milling.wastage,
     unit: milling.unit,
     date: milling.date,
     created_at: now()

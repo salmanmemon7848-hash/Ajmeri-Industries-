@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { addPaddyPurchase, getPaddyPurchases, deletePaddyPurchase, getErrorMessage } from '../services/api';
+import { generatePaddyPDF } from '../utils/pdfGenerator';
 
 const PaddyEntry = () => {
   const navigate = useNavigate();
@@ -13,9 +14,9 @@ const PaddyEntry = () => {
   
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
-    farmerName: '',
-    newQuantity: '',
-    oldQuantity: '',
+    source: '',
+    newBags: '',
+    oldBags: '',
     riceMillHamali: '',
     warehouseHamali: '',
     totalAmount: ''
@@ -24,8 +25,8 @@ const PaddyEntry = () => {
   // Calculate total hamali
   const totalHamali = (parseFloat(formData.riceMillHamali) || 0) + (parseFloat(formData.warehouseHamali) || 0);
 
-  // Calculate total paddy
-  const totalPaddy = (parseFloat(formData.newQuantity) || 0) + (parseFloat(formData.oldQuantity) || 0);
+  // Calculate total bags
+  const totalBags = (parseFloat(formData.newBags) || 0) + (parseFloat(formData.oldBags) || 0);
 
   useEffect(() => {
     fetchEntries();
@@ -55,9 +56,9 @@ const PaddyEntry = () => {
   const resetForm = () => {
     setFormData({
       date: new Date().toISOString().split('T')[0],
-      farmerName: '',
-      newQuantity: '',
-      oldQuantity: '',
+      source: '',
+      newBags: '',
+      oldBags: '',
       riceMillHamali: '',
       warehouseHamali: '',
       totalAmount: ''
@@ -68,8 +69,8 @@ const PaddyEntry = () => {
   const handlePreview = (e) => {
     e.preventDefault();
     
-    if (!formData.newQuantity && !formData.oldQuantity) {
-      setMessage('❌ Please enter at least New or Old quantity');
+    if (!formData.newBags && !formData.oldBags) {
+      setMessage('❌ Please enter at least New or Old bags');
       setMessageType('error');
       return;
     }
@@ -77,18 +78,28 @@ const PaddyEntry = () => {
     setShowPreview(true);
   };
 
+  const handleDownloadPDF = () => {
+    const doc = generatePaddyPDF({
+      ...formData,
+      farmerName: formData.source,
+      newQuantity: formData.newBags,
+      oldQuantity: formData.oldBags
+    });
+    doc.save(`Paddy_Entry_${formData.date}.pdf`);
+  };
+
   const handleConfirmSave = async () => {
     const dataToSubmit = {
       date: formData.date,
-      farmerName: formData.farmerName,
-      newQuantity: parseFloat(formData.newQuantity) || 0,
-      oldQuantity: parseFloat(formData.oldQuantity) || 0,
-      totalQuantity: totalPaddy,
+      farmerName: formData.source,
+      newQuantity: parseFloat(formData.newBags) || 0,
+      oldQuantity: parseFloat(formData.oldBags) || 0,
+      totalQuantity: totalBags,
       riceMillHamali: parseFloat(formData.riceMillHamali) || 0,
       warehouseHamali: parseFloat(formData.warehouseHamali) || 0,
       totalHamali: totalHamali,
       totalAmount: parseFloat(formData.totalAmount) || 0,
-      bags: Math.ceil(totalPaddy / 5),
+      bags: Math.ceil(totalBags / 5),
       bagType: 'Mixed'
     };
 
@@ -116,9 +127,9 @@ const PaddyEntry = () => {
     setEditingId(entry._id);
     setFormData({
       date: entry.date?.split('T')[0] || new Date().toISOString().split('T')[0],
-      farmerName: entry.farmerName || '',
-      newQuantity: entry.newQuantity || '',
-      oldQuantity: entry.oldQuantity || '',
+      source: entry.farmerName || '',
+      newBags: entry.newQuantity || '',
+      oldBags: entry.oldQuantity || '',
       riceMillHamali: entry.riceMillHamali || '',
       warehouseHamali: entry.warehouseHamali || '',
       totalAmount: entry.totalAmount || ''
@@ -173,29 +184,29 @@ const PaddyEntry = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Farmer Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Source</label>
               <input
                 type="text"
-                name="farmerName"
-                value={formData.farmerName}
+                name="source"
+                value={formData.source}
                 onChange={handleChange}
-                placeholder="Enter farmer name"
+                placeholder="Enter source name"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                 required
               />
             </div>
           </div>
 
-          {/* New + Old Quantity Fields */}
+          {/* New + Old Bags Fields */}
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                New Paddy (Qu) <span className="text-red-500">*</span>
+                New Bags (Qu) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
-                name="newQuantity"
-                value={formData.newQuantity}
+                name="newBags"
+                value={formData.newBags}
                 onChange={handleChange}
                 placeholder="0"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
@@ -206,12 +217,12 @@ const PaddyEntry = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Old Paddy (Qu) <span className="text-red-500">*</span>
+                Old Bags (Qu) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
-                name="oldQuantity"
-                value={formData.oldQuantity}
+                name="oldBags"
+                value={formData.oldBags}
                 onChange={handleChange}
                 placeholder="0"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
@@ -221,9 +232,9 @@ const PaddyEntry = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Total Paddy</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Total Bags</label>
               <div className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg font-bold text-green-700">
-                {totalPaddy.toFixed(2)} Qu
+                {totalBags.toFixed(2)} Qu
               </div>
             </div>
           </div>
@@ -308,20 +319,20 @@ const PaddyEntry = () => {
                 <span className="font-medium">{formData.date}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Farmer Name:</span>
-                <span className="font-medium">{formData.farmerName}</span>
+                <span className="text-gray-600">Source:</span>
+                <span className="font-medium">{formData.source}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">New Paddy:</span>
-                <span className="font-medium">{formData.newQuantity || 0} Qu</span>
+                <span className="text-gray-600">New Bags:</span>
+                <span className="font-medium">{formData.newBags || 0} Qu</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Old Paddy:</span>
-                <span className="font-medium">{formData.oldQuantity || 0} Qu</span>
+                <span className="text-gray-600">Old Bags:</span>
+                <span className="font-medium">{formData.oldBags || 0} Qu</span>
               </div>
               <div className="flex justify-between border-t pt-2">
-                <span className="text-gray-800 font-medium">Total Paddy:</span>
-                <span className="font-bold text-green-700">{totalPaddy.toFixed(2)} Qu</span>
+                <span className="text-gray-800 font-medium">Total Bags:</span>
+                <span className="font-bold text-green-700">{totalBags.toFixed(2)} Qu</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Rice Mill Hamali:</span>
@@ -341,12 +352,18 @@ const PaddyEntry = () => {
               </div>
             </div>
 
-            <div className="flex gap-3 mt-6">
+            <div className="flex gap-2 mt-6">
               <button
                 onClick={() => setShowPreview(false)}
                 className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400"
               >
                 Edit Back
+              </button>
+              <button
+                onClick={handleDownloadPDF}
+                className="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600"
+              >
+                Download PDF
               </button>
               <button
                 onClick={handleConfirmSave}
