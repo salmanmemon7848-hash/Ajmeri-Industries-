@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { getDashboardSummary, getStock, getErrorMessage, resetAllData, getPaddyPurchases, getExpenses, getSales } from '../services/api';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [summary, setSummary] = useState(null);
   const [stock, setStock] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -10,6 +11,7 @@ const Dashboard = () => {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [resetMessage, setResetMessage] = useState('');
+  const [showResetModal, setShowResetModal] = useState(false);
 
   const quickActions = [
     { path: '/paddy-entry', label: 'Add Paddy', icon: '🌾', color: 'bg-green-500', hover: 'hover:bg-green-600' },
@@ -92,14 +94,11 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, [fetchData]);
 
-  const handleResetData = async () => {
-    if (!confirm('Are you sure you want to delete ALL data?\n\nThis will delete:\n• All Paddy purchases\n• All Milling entries\n• All Expenses\n• All Workers\n• All Sales\n• All Stock\n\nThis action cannot be undone!')) {
-      return;
-    }
-    
+  const handleResetConfirm = async () => {
     try {
       await resetAllData();
       setResetMessage('✅ All data deleted successfully');
+      setShowResetModal(false);
       // Clear cache and refresh
       localStorage.removeItem('dashboardCache');
       localStorage.removeItem('dashboardCacheTime');
@@ -107,8 +106,14 @@ const Dashboard = () => {
       setTimeout(() => setResetMessage(''), 3000);
     } catch (error) {
       setResetMessage(`❌ ${getErrorMessage(error)}`);
+      setShowResetModal(false);
       setTimeout(() => setResetMessage(''), 3000);
     }
+  };
+
+  const handleResetCancel = () => {
+    setShowResetModal(false);
+    navigate('/');
   };
 
   if (loading) {
@@ -253,16 +258,41 @@ const Dashboard = () => {
         )}
         
         <button
-          onClick={handleResetData}
+          onClick={() => setShowResetModal(true)}
           className="w-full bg-red-500 text-white py-3 rounded-lg font-medium hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
         >
           <span>🗑️</span>
           <span>Reset All Data</span>
         </button>
         <p className="text-sm text-gray-500 mt-2 text-center">
-          This will delete all Paddy, Milling, Expenses, Workers, Sales, and Stock data
+          Click to delete all data
         </p>
       </div>
+
+      {/* Simple Reset Modal */}
+      {showResetModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+            <h3 className="text-lg font-bold mb-4">Reset All Data?</h3>
+            
+            <div className="space-y-3">
+              <button
+                onClick={handleResetCancel}
+                className="w-full bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              
+              <button
+                onClick={handleResetConfirm}
+                className="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
