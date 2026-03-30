@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getDailyReport, getMonthlyReport, getStock, getExpenses, getWorkers } from '../services/api';
+import { getDailyReport, getMonthlyReport, getStock, getExpenses, getWorkers, getPaddyPurchases, getPurchases, getMillingProcesses, getSales } from '../services/api';
 import { jsPDF } from 'jspdf';
 
 const Reports = () => {
@@ -9,6 +9,10 @@ const Reports = () => {
   const [stock, setStock] = useState(null);
   const [expenses, setExpenses] = useState([]);
   const [workers, setWorkers] = useState([]);
+  const [paddyPurchases, setPaddyPurchases] = useState([]);
+  const [purchases, setPurchases] = useState([]);
+  const [millingProcesses, setMillingProcesses] = useState([]);
+  const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -18,6 +22,10 @@ const Reports = () => {
     fetchStock();
     fetchExpenses();
     fetchWorkers();
+    fetchPaddyPurchases();
+    fetchPurchases();
+    fetchMillingProcesses();
+    fetchSales();
   }, []);
 
   useEffect(() => {
@@ -74,6 +82,42 @@ const Reports = () => {
       setWorkers(response.data?.data || []);
     } catch (error) {
       console.error('Error fetching workers:', error);
+    }
+  };
+
+  const fetchPaddyPurchases = async () => {
+    try {
+      const response = await getPaddyPurchases();
+      setPaddyPurchases(response.data?.data || []);
+    } catch (error) {
+      console.error('Error fetching paddy purchases:', error);
+    }
+  };
+
+  const fetchPurchases = async () => {
+    try {
+      const response = await getPurchases();
+      setPurchases(response.data?.data || []);
+    } catch (error) {
+      console.error('Error fetching purchases:', error);
+    }
+  };
+
+  const fetchMillingProcesses = async () => {
+    try {
+      const response = await getMillingProcesses();
+      setMillingProcesses(response.data?.data || []);
+    } catch (error) {
+      console.error('Error fetching milling processes:', error);
+    }
+  };
+
+  const fetchSales = async () => {
+    try {
+      const response = await getSales();
+      setSales(response.data?.data || []);
+    } catch (error) {
+      console.error('Error fetching sales:', error);
     }
   };
 
@@ -300,6 +344,132 @@ const Reports = () => {
     doc.save(`Worker_History_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
+  const generatePaddyPurchasePDF = () => {
+    const doc = new jsPDF();
+    
+    doc.setFontSize(20);
+    doc.text('Ajmeri Industries - Add Paddy History', 20, 20);
+    doc.setFontSize(12);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 30);
+
+    let y = 50;
+    doc.setFontSize(14);
+    doc.text('Paddy Entries', 20, y);
+    y += 15;
+
+    doc.setFontSize(10);
+    paddyPurchases.forEach((item, index) => {
+      if (y > 250) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.text(`${index + 1}. ${new Date(item.date).toLocaleDateString()} - ${item.farmerName || item.source || 'N/A'}`, 20, y);
+      y += 7;
+      doc.text(`   New: ${item.newQuantity || 0} Qu | Old: ${item.oldQuantity || 0} Qu | Total: ${item.totalQuantity || 0} Qu`, 20, y);
+      y += 7;
+      doc.text(`   Hamali: ₹${item.totalHamali || 0} | Amount: ₹${item.totalAmount || 0}`, 20, y);
+      y += 10;
+    });
+
+    doc.save(`Add_Paddy_History_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  const generatePurchaseHistoryPDF = (type) => {
+    const doc = new jsPDF();
+    const filteredPurchases = purchases.filter(p => p.type === type);
+    
+    doc.setFontSize(20);
+    doc.text(`Ajmeri Industries - ${type === 'paddy' ? 'Purchase Paddy' : 'Purchase Rice'} History`, 20, 20);
+    doc.setFontSize(12);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 30);
+
+    let y = 50;
+    doc.setFontSize(14);
+    doc.text(`${type === 'paddy' ? 'Paddy' : 'Rice'} Purchase Entries`, 20, y);
+    y += 15;
+
+    doc.setFontSize(10);
+    filteredPurchases.forEach((item, index) => {
+      if (y > 250) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.text(`${index + 1}. ${new Date(item.date).toLocaleDateString()} - ${item.supplierName || 'N/A'}`, 20, y);
+      y += 7;
+      doc.text(`   Qty: ${item.quantity || 0} Qu | Rate: ₹${item.rate || 0}/Qu | Total: ₹${item.totalAmount || 0}`, 20, y);
+      y += 7;
+      if (type === 'paddy') {
+        doc.text(`   Hamali: ₹${item.totalHamali || 0}`, 20, y);
+        y += 7;
+      }
+      y += 3;
+    });
+
+    doc.save(`${type === 'paddy' ? 'Purchase_Paddy' : 'Purchase_Rice'}_History_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  const generateMillingPDF = () => {
+    const doc = new jsPDF();
+    
+    doc.setFontSize(20);
+    doc.text('Ajmeri Industries - Milling History', 20, 20);
+    doc.setFontSize(12);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 30);
+
+    let y = 50;
+    doc.setFontSize(14);
+    doc.text('Milling Entries', 20, y);
+    y += 15;
+
+    doc.setFontSize(10);
+    millingProcesses.forEach((item, index) => {
+      if (y > 220) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.text(`${index + 1}. ${new Date(item.date).toLocaleDateString()}`, 20, y);
+      y += 7;
+      doc.text(`   Input: ${item.quantity || 0} ${item.unit || 'Qu'}`, 20, y);
+      y += 7;
+      doc.text(`   Output - Rice: ${item.rice || 0}, Bran: ${item.bran || 0}, Broken: ${item.broken || 0}`, 20, y);
+      y += 7;
+      doc.text(`            Rafi: ${item.rafi || 0}, Husk: ${item.husk || 0}, Wastage: ${item.wastage || 0}`, 20, y);
+      y += 10;
+    });
+
+    doc.save(`Milling_History_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  const generateSalesPDF = () => {
+    const doc = new jsPDF();
+    
+    doc.setFontSize(20);
+    doc.text('Ajmeri Industries - Sales History', 20, 20);
+    doc.setFontSize(12);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 30);
+
+    let y = 50;
+    doc.setFontSize(14);
+    doc.text('Sales Entries', 20, y);
+    y += 15;
+
+    doc.setFontSize(10);
+    sales.forEach((item, index) => {
+      if (y > 250) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.text(`${index + 1}. ${new Date(item.date).toLocaleDateString()} - ${item.buyerName || 'N/A'}`, 20, y);
+      y += 7;
+      doc.text(`   Product: ${item.product || 'N/A'} | Qty: ${item.quantity || 0} ${item.unit || 'Qu'}`, 20, y);
+      y += 7;
+      doc.text(`   Rate: ₹${item.rate || 0}/${item.unit || 'Qu'} | Total: ₹${item.totalAmount || 0}`, 20, y);
+      y += 10;
+    });
+
+    doc.save(`Sales_History_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
   const months = [
     { value: 1, label: 'January' },
     { value: 2, label: 'February' },
@@ -321,7 +491,7 @@ const Reports = () => {
 
       {/* Tab Navigation */}
       <div className="flex gap-2 border-b flex-wrap">
-        {['daily', 'monthly', 'stock', 'expenses', 'workers'].map((tab) => (
+        {['daily', 'monthly', 'stock', 'addPaddy', 'purchasePaddy', 'purchaseRice', 'milling', 'sales', 'expenses', 'workers'].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -331,7 +501,14 @@ const Reports = () => {
                 : 'text-gray-500'
             }`}
           >
-            {tab === 'expenses' ? 'Expense History' : tab === 'workers' ? 'Worker History' : `${tab} Report`}
+            {tab === 'addPaddy' ? 'Add Paddy' : 
+             tab === 'purchasePaddy' ? 'Purchase Paddy' : 
+             tab === 'purchaseRice' ? 'Purchase Rice' : 
+             tab === 'milling' ? 'Milling' : 
+             tab === 'sales' ? 'Sales' : 
+             tab === 'expenses' ? 'Expense History' : 
+             tab === 'workers' ? 'Worker History' : 
+             `${tab} Report`}
           </button>
         ))}
       </div>
@@ -366,10 +543,25 @@ const Reports = () => {
           if (activeTab === 'daily') generateDailyPDF();
           else if (activeTab === 'monthly') generateMonthlyPDF();
           else if (activeTab === 'stock') generateStockPDF();
+          else if (activeTab === 'addPaddy') generatePaddyPurchasePDF();
+          else if (activeTab === 'purchasePaddy') generatePurchaseHistoryPDF('paddy');
+          else if (activeTab === 'purchaseRice') generatePurchaseHistoryPDF('rice');
+          else if (activeTab === 'milling') generateMillingPDF();
+          else if (activeTab === 'sales') generateSalesPDF();
           else if (activeTab === 'expenses') generateExpensePDF();
           else if (activeTab === 'workers') generateWorkerPDF();
         }}
-        disabled={loading || (activeTab === 'daily' && !dailyReport) || (activeTab === 'monthly' && !monthlyReport) || (activeTab === 'stock' && !stock) || (activeTab === 'expenses' && expenses.length === 0) || (activeTab === 'workers' && workers.length === 0)}
+        disabled={loading || 
+          (activeTab === 'daily' && !dailyReport) || 
+          (activeTab === 'monthly' && !monthlyReport) || 
+          (activeTab === 'stock' && !stock) || 
+          (activeTab === 'addPaddy' && paddyPurchases.length === 0) ||
+          (activeTab === 'purchasePaddy' && purchases.filter(p => p.type === 'paddy').length === 0) ||
+          (activeTab === 'purchaseRice' && purchases.filter(p => p.type === 'rice').length === 0) ||
+          (activeTab === 'milling' && millingProcesses.length === 0) ||
+          (activeTab === 'sales' && sales.length === 0) ||
+          (activeTab === 'expenses' && expenses.length === 0) || 
+          (activeTab === 'workers' && workers.length === 0)}
         className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-400"
       >
         Download PDF
@@ -563,6 +755,195 @@ const Reports = () => {
                       )}
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'addPaddy' && (
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold">Add Paddy History</h3>
+              
+              {paddyPurchases.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">No paddy entries recorded yet.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Date</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Source</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">New Bags</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Old Bags</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Total</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Hamali</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {paddyPurchases.map((item, index) => (
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm">{new Date(item.date).toLocaleDateString()}</td>
+                          <td className="px-4 py-3 text-sm font-medium">{item.farmerName || item.source || 'N/A'}</td>
+                          <td className="px-4 py-3 text-sm">{item.newQuantity || 0} Qu</td>
+                          <td className="px-4 py-3 text-sm">{item.oldQuantity || 0} Qu</td>
+                          <td className="px-4 py-3 text-sm font-medium">{item.totalQuantity || 0} Qu</td>
+                          <td className="px-4 py-3 text-sm">₹{item.totalHamali || 0}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'purchasePaddy' && (
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold">Purchase Paddy History</h3>
+              
+              {purchases.filter(p => p.type === 'paddy').length === 0 ? (
+                <div className="text-center text-gray-500 py-8">No paddy purchases recorded yet.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Date</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Supplier</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Quantity</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Rate</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Total</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Hamali</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {purchases.filter(p => p.type === 'paddy').map((item, index) => (
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm">{new Date(item.date).toLocaleDateString()}</td>
+                          <td className="px-4 py-3 text-sm font-medium">{item.supplierName || 'N/A'}</td>
+                          <td className="px-4 py-3 text-sm">{item.quantity || 0} Qu</td>
+                          <td className="px-4 py-3 text-sm">₹{item.rate || 0}/Qu</td>
+                          <td className="px-4 py-3 text-sm font-medium">₹{item.totalAmount || 0}</td>
+                          <td className="px-4 py-3 text-sm">₹{item.totalHamali || 0}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'purchaseRice' && (
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold">Purchase Rice History</h3>
+              
+              {purchases.filter(p => p.type === 'rice').length === 0 ? (
+                <div className="text-center text-gray-500 py-8">No rice purchases recorded yet.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Date</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Supplier</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Quantity</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Rate</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {purchases.filter(p => p.type === 'rice').map((item, index) => (
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm">{new Date(item.date).toLocaleDateString()}</td>
+                          <td className="px-4 py-3 text-sm font-medium">{item.supplierName || 'N/A'}</td>
+                          <td className="px-4 py-3 text-sm">{item.quantity || 0} Qu</td>
+                          <td className="px-4 py-3 text-sm">₹{item.rate || 0}/Qu</td>
+                          <td className="px-4 py-3 text-sm font-medium">₹{item.totalAmount || 0}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'milling' && (
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold">Milling History</h3>
+              
+              {millingProcesses.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">No milling entries recorded yet.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Date</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Input</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Rice</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Bran</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Broken</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Rafi</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Husk</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Wastage</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {millingProcesses.map((item, index) => (
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm">{new Date(item.date).toLocaleDateString()}</td>
+                          <td className="px-4 py-3 text-sm font-medium">{item.quantity || 0} {item.unit || 'Qu'}</td>
+                          <td className="px-4 py-3 text-sm">{item.rice || 0}</td>
+                          <td className="px-4 py-3 text-sm">{item.bran || 0}</td>
+                          <td className="px-4 py-3 text-sm">{item.broken || 0}</td>
+                          <td className="px-4 py-3 text-sm">{item.rafi || 0}</td>
+                          <td className="px-4 py-3 text-sm">{item.husk || 0}</td>
+                          <td className="px-4 py-3 text-sm text-orange-600">{item.wastage || 0}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'sales' && (
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold">Sales History</h3>
+              
+              {sales.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">No sales recorded yet.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Date</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Buyer</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Product</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Quantity</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Rate</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {sales.map((item, index) => (
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm">{new Date(item.date).toLocaleDateString()}</td>
+                          <td className="px-4 py-3 text-sm font-medium">{item.buyerName || 'N/A'}</td>
+                          <td className="px-4 py-3 text-sm">
+                            <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs">{item.product || 'N/A'}</span>
+                          </td>
+                          <td className="px-4 py-3 text-sm">{item.quantity || 0} {item.unit || 'Qu'}</td>
+                          <td className="px-4 py-3 text-sm">₹{item.rate || 0}/{item.unit || 'Qu'}</td>
+                          <td className="px-4 py-3 text-sm font-medium">₹{item.totalAmount || 0}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>

@@ -70,6 +70,7 @@ const MillingEntry = () => {
         newData.rafi = outputs.rafi;
         newData.husk = outputs.husk;
         newData.bran = outputs.bran;
+        newData.wastage = outputs.wastage;
       }
       
       return newData;
@@ -332,17 +333,22 @@ const MillingEntry = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 mb-1">Wastage (6%)</label>
+                    <label className="block text-sm text-gray-600 mb-1">Wastage ({wastagePercent}%)</label>
                     <input
                       type="number"
                       name="wastage"
                       value={formData.wastage}
                       onChange={handleChange}
-                      placeholder="Wastage qty"
+                      placeholder="Auto-calculated"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-orange-50"
                       min="0"
                       step="0.01"
                     />
+                    {formData.quantity && (
+                      <div className="text-xs text-orange-600 mt-1">
+                        Auto: {((parseFloat(formData.quantity) || 0) * 0.06).toFixed(2)} {formData.unit}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
