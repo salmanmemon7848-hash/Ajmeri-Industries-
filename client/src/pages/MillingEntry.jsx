@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createMilling, getMillingProcesses, deleteMilling, getErrorMessage } from '../services/api';
+import { generateMillingPDF } from '../utils/pdfGenerator';
 
 const MillingEntry = () => {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ const MillingEntry = () => {
     husk: '',
     wastage: ''
   });
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     fetchMillingProcesses();
@@ -79,8 +81,22 @@ const MillingEntry = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handlePreview = (e) => {
     e.preventDefault();
+    if (!formData.quantity) {
+      setMessage('❌ Please enter quantity');
+      setMessageType('error');
+      return;
+    }
+    setShowPreview(true);
+  };
+
+  const handleDownloadPDF = () => {
+    const doc = generateMillingPDF(formData);
+    doc.save(`Milling_Entry_${formData.date}.pdf`);
+  };
+
+  const handleConfirmSave = async () => {
     setLoading(true);
     setMessage('Saving milling entry...');
     setMessageType('info');
@@ -99,6 +115,7 @@ const MillingEntry = () => {
 
       setMessage('✅ Milling entry saved successfully!');
       setMessageType('success');
+      setShowPreview(false);
       
       setFormData({
         date: new Date().toISOString().split('T')[0],
@@ -339,14 +356,92 @@ const MillingEntry = () => {
                   Cancel
                 </button>
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handlePreview}
                   disabled={loading}
                   className="flex-1 bg-blue-500 text-white py-2 rounded-lg disabled:bg-gray-400"
                 >
-                  {loading ? 'Saving...' : 'Save Entry'}
+                  Preview Entry
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Preview Modal */}
+      {showPreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-bold mb-4">Preview Milling Entry</h3>
+            
+            <div className="bg-gray-50 p-4 rounded-lg mb-4 space-y-2">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Date:</span>
+                <span className="font-medium">{formData.date}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Input Quantity:</span>
+                <span className="font-medium">{formData.quantity} {formData.unit}</span>
+              </div>
+              <div className="border-t pt-2 mt-2">
+                <span className="text-gray-800 font-medium">Output Products:</span>
+                <div className="mt-2 space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Rice (55%):</span>
+                    <span className="font-medium">{formData.rice || 0} {formData.unit}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Bran (8%):</span>
+                    <span className="font-medium">{formData.bran || 0} {formData.unit}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Broken (10%):</span>
+                    <span className="font-medium">{formData.broken || 0} {formData.unit}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Rafi (1%):</span>
+                    <span className="font-medium">{formData.rafi || 0} {formData.unit}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Husk (20%):</span>
+                    <span className="font-medium">{formData.husk || 0} {formData.unit}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Wastage (6%):</span>
+                    <span className="font-medium">{formData.wastage || wastageAmount.toFixed(2)} {formData.unit}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={handleDownloadPDF}
+                className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Download PDF
+              </button>
+              
+              <button
+                onClick={handleConfirmSave}
+                disabled={loading}
+                className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 disabled:bg-gray-400"
+              >
+                {loading ? 'Saving...' : 'Confirm & Save'}
+              </button>
+              
+              <button
+                onClick={() => setShowPreview(false)}
+                disabled={loading}
+                className="w-full bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400"
+              >
+                Edit Back
+              </button>
+            </div>
           </div>
         </div>
       )}

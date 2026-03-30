@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { addSale, getStock, getErrorMessage } from '../services/api';
+import { generateSalesPDF } from '../utils/pdfGenerator';
 
 const SalesEntry = () => {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ const SalesEntry = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
+  const [showPreview, setShowPreview] = useState(false);
 
   const [totalAmount, setTotalAmount] = useState(0);
 
@@ -58,10 +60,31 @@ const SalesEntry = () => {
     }
   };
 
-  const handleSubmit = async (e, pendingData = null) => {
-    if (e) e.preventDefault();
-    
-    const dataToSubmit = pendingData || {
+  const handlePreview = (e) => {
+    e.preventDefault();
+    if (!formData.buyerName || !formData.quantity || !formData.rate) {
+      setMessage('❌ Please fill all required fields');
+      setMessageType('error');
+      return;
+    }
+    if (parseFloat(formData.quantity) > availableStock) {
+      setMessage('❌ Quantity exceeds available stock!');
+      setMessageType('error');
+      return;
+    }
+    setShowPreview(true);
+  };
+
+  const handleDownloadPDF = () => {
+    const doc = generateSalesPDF({
+      ...formData,
+      totalAmount
+    });
+    doc.save(`Sales_Entry_${formData.date}.pdf`);
+  };
+
+  const handleConfirmSave = async () => {
+    const dataToSubmit = {
       ...formData,
       quantity: parseFloat(formData.quantity),
       rate: parseFloat(formData.rate),
@@ -69,7 +92,7 @@ const SalesEntry = () => {
     };
 
     setLoading(true);
-    setMessage(pendingData ? 'Retrying connection...' : 'Recording sale, please wait...');
+    setMessage('Recording sale, please wait...');
     setMessageType('info');
 
     try {
@@ -79,6 +102,7 @@ const SalesEntry = () => {
       
       setMessage('✅ Sale recorded successfully!');
       setMessageType('success');
+      setShowPreview(false);
       
       setTimeout(() => {
         navigate('/');
@@ -265,11 +289,12 @@ const SalesEntry = () => {
         )}
 
         <button
-          type="submit"
+          type="button"
+          onClick={handlePreview}
           disabled={loading || parseFloat(formData.quantity) > availableStock}
           className="w-full bg-yellow-500 text-white py-3 rounded-lg font-medium hover:bg-yellow-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
         >
-          {loading ? 'Saving...' : 'Record Sale'}
+          Preview Entry
         </button>
 
         {parseFloat(formData.quantity) > availableStock && (
@@ -278,6 +303,76 @@ const SalesEntry = () => {
           </p>
         )}
       </form>
+
+      {/* Preview Modal */}
+      {showPreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-bold mb-4">Preview Sales Entry</h3>
+            
+            <div className="bg-gray-50 p-4 rounded-lg mb-4 space-y-2">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Date:</span>
+                <span className="font-medium">{formData.date}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Buyer:</span>
+                <span className="font-medium">{formData.buyerName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Product:</span>
+                <span className="font-medium">{formData.product}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Quantity:</span>
+                <span className="font-medium">{formData.quantity} {formData.unit}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Rate:</span>
+                <span className="font-medium">₹{formData.rate}/{formData.unit}</span>
+              </div>
+              <div className="flex justify-between border-t pt-2 mt-2">
+                <span className="text-gray-800 font-medium">Total Amount:</span>
+                <span className="font-bold text-yellow-700">₹{totalAmount.toLocaleString()}</span>
+              </div>
+              {formData.description && (
+                <div className="flex justify-between border-t pt-2 mt-2">
+                  <span className="text-gray-600">Description:</span>
+                  <span className="font-medium">{formData.description}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={handleDownloadPDF}
+                className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Download PDF
+              </button>
+              
+              <button
+                onClick={handleConfirmSave}
+                disabled={loading}
+                className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 disabled:bg-gray-400"
+              >
+                {loading ? 'Saving...' : 'Confirm & Save'}
+              </button>
+              
+              <button
+                onClick={() => setShowPreview(false)}
+                disabled={loading}
+                className="w-full bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400"
+              >
+                Edit Back
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

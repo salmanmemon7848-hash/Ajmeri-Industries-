@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getDailyReport, getMonthlyReport, getStock } from '../services/api';
+import { getDailyReport, getMonthlyReport, getStock, getExpenses, getWorkers } from '../services/api';
 import { jsPDF } from 'jspdf';
 
 const Reports = () => {
@@ -7,6 +7,8 @@ const Reports = () => {
   const [dailyReport, setDailyReport] = useState(null);
   const [monthlyReport, setMonthlyReport] = useState(null);
   const [stock, setStock] = useState(null);
+  const [expenses, setExpenses] = useState([]);
+  const [workers, setWorkers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -14,6 +16,8 @@ const Reports = () => {
   useEffect(() => {
     fetchDailyReport();
     fetchStock();
+    fetchExpenses();
+    fetchWorkers();
   }, []);
 
   useEffect(() => {
@@ -52,6 +56,24 @@ const Reports = () => {
       setStock(response.data.data);
     } catch (error) {
       console.error('Error fetching stock:', error);
+    }
+  };
+
+  const fetchExpenses = async () => {
+    try {
+      const response = await getExpenses();
+      setExpenses(response.data?.data || []);
+    } catch (error) {
+      console.error('Error fetching expenses:', error);
+    }
+  };
+
+  const fetchWorkers = async () => {
+    try {
+      const response = await getWorkers();
+      setWorkers(response.data?.data || []);
+    } catch (error) {
+      console.error('Error fetching workers:', error);
     }
   };
 
@@ -217,6 +239,67 @@ const Reports = () => {
     doc.save(`Stock_Report_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
+  const generateExpensePDF = () => {
+    const doc = new jsPDF();
+    
+    doc.setFontSize(20);
+    doc.text('Ajmeri Industries - Expense History', 20, 20);
+    doc.setFontSize(12);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 30);
+
+    let y = 50;
+    doc.setFontSize(14);
+    doc.text('All Expenses', 20, y);
+    y += 15;
+
+    doc.setFontSize(10);
+    expenses.forEach((expense, index) => {
+      if (y > 270) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.text(`${index + 1}. ${new Date(expense.date).toLocaleDateString()} - ${expense.category}`, 20, y);
+      y += 7;
+      doc.text(`   Amount: ₹${expense.amount}${expense.notes ? ' | Notes: ' + expense.notes : ''}`, 20, y);
+      y += 10;
+    });
+
+    doc.save(`Expense_History_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  const generateWorkerPDF = () => {
+    const doc = new jsPDF();
+    
+    doc.setFontSize(20);
+    doc.text('Ajmeri Industries - Worker History', 20, 20);
+    doc.setFontSize(12);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 30);
+
+    let y = 50;
+    doc.setFontSize(14);
+    doc.text('Worker Payments', 20, y);
+    y += 15;
+
+    doc.setFontSize(10);
+    workers.forEach((worker, index) => {
+      if (worker.payments && worker.payments.length > 0) {
+        if (y > 250) {
+          doc.addPage();
+          y = 20;
+        }
+        doc.text(`${index + 1}. ${worker.name} (${worker.role})`, 20, y);
+        y += 7;
+        worker.payments.forEach((payment, pidx) => {
+          doc.text(`   ${pidx + 1}. ${new Date(payment.date).toLocaleDateString()} - ₹${payment.amount} (${payment.type})`, 20, y);
+          y += 7;
+        });
+        y += 5;
+      }
+    });
+
+    doc.save(`Worker_History_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
   const months = [
     { value: 1, label: 'January' },
     { value: 2, label: 'February' },
@@ -237,8 +320,8 @@ const Reports = () => {
       <h2 className="text-xl font-bold text-gray-800">Reports</h2>
 
       {/* Tab Navigation */}
-      <div className="flex gap-2 border-b">
-        {['daily', 'monthly', 'stock'].map((tab) => (
+      <div className="flex gap-2 border-b flex-wrap">
+        {['daily', 'monthly', 'stock', 'expenses', 'workers'].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -248,7 +331,7 @@ const Reports = () => {
                 : 'text-gray-500'
             }`}
           >
-            {tab} Report
+            {tab === 'expenses' ? 'Expense History' : tab === 'workers' ? 'Worker History' : `${tab} Report`}
           </button>
         ))}
       </div>
@@ -282,9 +365,11 @@ const Reports = () => {
         onClick={() => {
           if (activeTab === 'daily') generateDailyPDF();
           else if (activeTab === 'monthly') generateMonthlyPDF();
-          else generateStockPDF();
+          else if (activeTab === 'stock') generateStockPDF();
+          else if (activeTab === 'expenses') generateExpensePDF();
+          else if (activeTab === 'workers') generateWorkerPDF();
         }}
-        disabled={loading || (activeTab === 'daily' && !dailyReport) || (activeTab === 'monthly' && !monthlyReport) || (activeTab === 'stock' && !stock)}
+        disabled={loading || (activeTab === 'daily' && !dailyReport) || (activeTab === 'monthly' && !monthlyReport) || (activeTab === 'stock' && !stock) || (activeTab === 'expenses' && expenses.length === 0) || (activeTab === 'workers' && workers.length === 0)}
         className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-400"
       >
         Download PDF
@@ -392,6 +477,94 @@ const Reports = () => {
                   <div className="text-xl font-bold">{stock.husk.quantity} {stock.husk.unit}</div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'expenses' && (
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold">Expense History</h3>
+              
+              {expenses.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">No expenses recorded yet.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Date</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Category</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Amount</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {expenses.map((expense, index) => (
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm">{new Date(expense.date).toLocaleDateString()}</td>
+                          <td className="px-4 py-3 text-sm">
+                            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">{expense.category}</span>
+                          </td>
+                          <td className="px-4 py-3 text-sm font-medium">₹{expense.amount}</td>
+                          <td className="px-4 py-3 text-sm text-gray-500">{expense.notes || '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'workers' && (
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold">Worker History</h3>
+              
+              {workers.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">No workers added yet.</div>
+              ) : (
+                <div className="space-y-4">
+                  {workers.map((worker, index) => (
+                    <div key={index} className="bg-white border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-semibold text-gray-800">{worker.name}</h4>
+                          <span className="text-sm text-gray-500">{worker.role}</span>
+                        </div>
+                      </div>
+                      
+                      {worker.payments && worker.payments.length > 0 ? (
+                        <div className="mt-3">
+                          <h5 className="text-sm font-medium text-gray-600 mb-2">Payment History:</h5>
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead className="bg-gray-50">
+                                <tr>
+                                  <th className="px-3 py-2 text-left">Date</th>
+                                  <th className="px-3 py-2 text-left">Type</th>
+                                  <th className="px-3 py-2 text-left">Amount</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y">
+                                {worker.payments.map((payment, pidx) => (
+                                  <tr key={pidx}>
+                                    <td className="px-3 py-2">{new Date(payment.date).toLocaleDateString()}</td>
+                                    <td className="px-3 py-2">
+                                      <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">{payment.type}</span>
+                                    </td>
+                                    <td className="px-3 py-2 font-medium">₹{payment.amount}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500 mt-2">No payments recorded</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
