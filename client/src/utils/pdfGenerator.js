@@ -25,11 +25,15 @@ export const generatePaddyPDF = (data) => {
     ['New Bags:', `${data.newQuantity || 0} Qu`],
     ['Old Bags:', `${data.oldQuantity || 0} Qu`],
     ['Total Bags:', `${(parseFloat(data.newQuantity) + parseFloat(data.oldQuantity)).toFixed(2)} Qu`],
+    ['Total Quintal:', `${data.totalQuintal || ((parseFloat(data.newQuantity) + parseFloat(data.oldQuantity)) / 2.5).toFixed(2)} Qu`],
     ['Rice Mill Hamali:', `₹${data.riceMillHamali || 0}`],
     ['Warehouse Hamali:', `₹${data.warehouseHamali || 0}`],
     ['Total Hamali:', `₹${(parseFloat(data.riceMillHamali) + parseFloat(data.warehouseHamali)).toFixed(2)}`],
-    ['Total Amount:', `₹${data.totalAmount || 0}`],
   ];
+  
+  if (data.description) {
+    fields.push(['Description:', data.description]);
+  }
   
   fields.forEach(([label, value]) => {
     doc.text(`${label} ${value}`, 20, y);

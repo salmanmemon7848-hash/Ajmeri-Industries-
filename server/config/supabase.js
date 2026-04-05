@@ -1,4 +1,4 @@
-const { createClient } = require('@supabase/supabase-js');
++const { createClient } = require('@supabase/supabase-js');
 
 // Supabase configuration
 const supabaseUrl = 'https://whqgoovlfbmfgsvqezmy.supabase.co';

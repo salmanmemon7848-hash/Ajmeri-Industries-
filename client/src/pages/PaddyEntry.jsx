@@ -19,7 +19,7 @@ const PaddyEntry = () => {
     oldBags: '',
     riceMillHamali: '',
     warehouseHamali: '',
-    totalAmount: ''
+    description: ''
   });
 
   // Calculate total hamali
@@ -27,6 +27,9 @@ const PaddyEntry = () => {
 
   // Calculate total bags
   const totalBags = (parseFloat(formData.newBags) || 0) + (parseFloat(formData.oldBags) || 0);
+
+  // Calculate total quintal (Total Bags ÷ 2.5)
+  const totalQuintal = totalBags > 0 ? (totalBags / 2.5).toFixed(2) : '0.00';
 
   useEffect(() => {
     fetchEntries();
@@ -61,7 +64,7 @@ const PaddyEntry = () => {
       oldBags: '',
       riceMillHamali: '',
       warehouseHamali: '',
-      totalAmount: ''
+      description: ''
     });
     setEditingId(null);
   };
@@ -95,12 +98,11 @@ const PaddyEntry = () => {
       newQuantity: parseFloat(formData.newBags) || 0,
       oldQuantity: parseFloat(formData.oldBags) || 0,
       totalQuantity: totalBags,
+      totalQuintal: parseFloat(totalQuintal),
       riceMillHamali: parseFloat(formData.riceMillHamali) || 0,
       warehouseHamali: parseFloat(formData.warehouseHamali) || 0,
       totalHamali: totalHamali,
-      totalAmount: parseFloat(formData.totalAmount) || 0,
-      bags: Math.ceil(totalBags / 5),
-      bagType: 'Mixed'
+      description: formData.description
     };
 
     setLoading(true);
@@ -273,16 +275,25 @@ const PaddyEntry = () => {
             </div>
           </div>
 
+          {/* Total Quintal (Auto-calculated) */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Total Amount (₹)</label>
-            <input
-              type="number"
-              name="totalAmount"
-              value={formData.totalAmount}
+            <label className="block text-sm font-medium text-gray-700 mb-1">Total Quantity (Quintal)</label>
+            <div className="w-full px-3 py-2 bg-green-50 border border-green-200 rounded-lg font-bold text-green-700">
+              {totalQuintal} Qu
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Auto-calculated: Total Bags ÷ 2.5</p>
+          </div>
+
+          {/* Description Field */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
+            <textarea
+              name="description"
+              value={formData.description}
               onChange={handleChange}
-              placeholder="Enter total amount"
+              placeholder="Enter any notes or remarks"
+              rows="3"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-              min="0"
             />
           </div>
 
@@ -334,6 +345,10 @@ const PaddyEntry = () => {
                 <span className="text-gray-800 font-medium">Total Bags:</span>
                 <span className="font-bold text-green-700">{totalBags.toFixed(2)} Qu</span>
               </div>
+              <div className="flex justify-between border-t pt-2">
+                <span className="text-gray-800 font-medium">Total Quintal:</span>
+                <span className="font-bold text-green-700">{totalQuintal} Qu</span>
+              </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Rice Mill Hamali:</span>
                 <span className="font-medium">₹{formData.riceMillHamali || 0}</span>
@@ -346,10 +361,12 @@ const PaddyEntry = () => {
                 <span className="text-gray-800 font-medium">Total Hamali:</span>
                 <span className="font-bold text-blue-700">₹{totalHamali.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between border-t pt-2">
-                <span className="text-gray-800 font-medium">Total Amount:</span>
-                <span className="font-bold text-green-700">₹{formData.totalAmount || 0}</span>
-              </div>
+              {formData.description && (
+                <div className="border-t pt-2">
+                  <span className="text-gray-600 block mb-1">Description:</span>
+                  <span className="text-sm text-gray-700">{formData.description}</span>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-2 mt-6">

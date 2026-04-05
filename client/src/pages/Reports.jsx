@@ -359,15 +359,22 @@ const Reports = () => {
 
     doc.setFontSize(10);
     paddyPurchases.forEach((item, index) => {
-      if (y > 250) {
+      if (y > 230) {
         doc.addPage();
         y = 20;
       }
       doc.text(`${index + 1}. ${new Date(item.date).toLocaleDateString()} - ${item.farmerName || item.source || 'N/A'}`, 20, y);
       y += 7;
-      doc.text(`   New: ${item.newQuantity || 0} Qu | Old: ${item.oldQuantity || 0} Qu | Total: ${item.totalQuantity || 0} Qu`, 20, y);
+      const totalQuintal = item.totalQuintal || ((item.totalQuantity || 0) / 2.5).toFixed(2);
+      doc.text(`   New: ${item.newQuantity || 0} Qu | Old: ${item.oldQuantity || 0} Qu`, 20, y);
       y += 7;
-      doc.text(`   Hamali: ₹${item.totalHamali || 0} | Amount: ₹${item.totalAmount || 0}`, 20, y);
+      doc.text(`   Total Bags: ${item.totalQuantity || 0} Qu | Total Quintal: ${totalQuintal} Qu`, 20, y);
+      y += 7;
+      doc.text(`   Hamali: ₹${item.totalHamali || 0}`, 20, y);
+      if (item.description) {
+        y += 7;
+        doc.text(`   Description: ${item.description.substring(0, 80)}${item.description.length > 80 ? '...' : ''}`, 20, y);
+      }
       y += 10;
     });
 
@@ -775,8 +782,10 @@ const Reports = () => {
                         <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Source</th>
                         <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">New Bags</th>
                         <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Old Bags</th>
-                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Total</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Total Bags</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Total Quintal</th>
                         <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Hamali</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">Description</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
@@ -787,7 +796,9 @@ const Reports = () => {
                           <td className="px-4 py-3 text-sm">{item.newQuantity || 0} Qu</td>
                           <td className="px-4 py-3 text-sm">{item.oldQuantity || 0} Qu</td>
                           <td className="px-4 py-3 text-sm font-medium">{item.totalQuantity || 0} Qu</td>
+                          <td className="px-4 py-3 text-sm font-bold text-green-700">{item.totalQuintal || ((item.totalQuantity || 0) / 2.5).toFixed(2)} Qu</td>
                           <td className="px-4 py-3 text-sm">₹{item.totalHamali || 0}</td>
+                          <td className="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">{item.description || '-'}</td>
                         </tr>
                       ))}
                     </tbody>
