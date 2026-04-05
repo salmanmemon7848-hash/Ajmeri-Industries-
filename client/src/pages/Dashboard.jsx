@@ -14,7 +14,7 @@ const Dashboard = () => {
   const [showResetModal, setShowResetModal] = useState(false);
 
   const quickActions = [
-    { path: '/paddy-entry', label: 'Add Paddy', icon: '🌾', color: 'bg-green-500', hover: 'hover:bg-green-600' },
+    { path: '/paddy-entry', label: 'Government Paddy', icon: '🌾', color: 'bg-green-500', hover: 'hover:bg-green-600' },
     { path: '/purchase-entry?type=paddy', label: 'Purchase Paddy', icon: '🛒', color: 'bg-emerald-500', hover: 'hover:bg-emerald-600' },
     { path: '/purchase-entry?type=rice', label: 'Purchase Rice', icon: '🍚', color: 'bg-teal-500', hover: 'hover:bg-teal-600' },
     { path: '/milling-entry', label: 'Milling', icon: '⚙️', color: 'bg-blue-500', hover: 'hover:bg-blue-600' },

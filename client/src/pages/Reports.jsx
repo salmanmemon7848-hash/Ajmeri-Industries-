@@ -200,59 +200,103 @@ const Reports = () => {
 
     const doc = new jsPDF();
     const date = new Date(dailyReport.date).toLocaleDateString();
+    const now = new Date();
     
-    doc.setFontSize(20);
-    doc.text('Ajmeri Industries - Daily Report', 20, 20);
-    doc.setFontSize(12);
-    doc.text(`Date: ${date}`, 20, 30);
-
-    let y = 50;
+    // Professional Header
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 64, 175); // Blue
+    doc.text('Ajmeri Industries', 105, 20, { align: 'center' });
     
-    // Purchases
-    doc.setFontSize(14);
-    doc.text('Paddy Purchases', 20, y);
-    y += 10;
     doc.setFontSize(10);
-    doc.text(`Total Purchases: ${dailyReport.purchases.count}`, 20, y);
-    y += 7;
-    doc.text(`Total Hamali: ₹${dailyReport.purchases.totalHamali}`, 20, y);
-    y += 15;
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text('Rice Mill Management System', 105, 28, { align: 'center' });
+    
+    doc.setDrawColor(30, 64, 175);
+    doc.setLineWidth(0.5);
+    doc.line(20, 32, 190, 32);
+    
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 30, 30);
+    doc.text('Daily Report', 105, 42, { align: 'center' });
+    
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    doc.text(`Date: ${date}`, 105, 50, { align: 'center' });
+    
+    doc.setFontSize(9);
+    doc.setTextColor(120, 120, 120);
+    doc.text(`Generated: ${now.toLocaleDateString()} at ${now.toLocaleTimeString()}`, 105, 56, { align: 'center' });
 
-    // Milling
-    doc.setFontSize(14);
-    doc.text('Milling', 20, y);
-    y += 10;
-    doc.setFontSize(10);
-    doc.text(`Total Milled: ${dailyReport.milling.totalQuantity} Qu`, 20, y);
-    y += 15;
-
-    // Expenses
-    doc.setFontSize(14);
-    doc.text('Expenses', 20, y);
-    y += 10;
-    doc.setFontSize(10);
-    doc.text(`Total Expenses: ₹${dailyReport.expenses.total}`, 20, y);
-    y += 15;
-
-    // Sales
-    doc.setFontSize(14);
-    doc.text('Sales', 20, y);
-    y += 10;
-    doc.setFontSize(10);
-    doc.text(`Total Sales: ₹${dailyReport.sales.total}`, 20, y);
-    y += 15;
-
-    // Profit
-    doc.setFontSize(14);
-    doc.text('Profit/Loss', 20, y);
-    y += 10;
-    doc.setFontSize(10);
-    doc.text(`Total Sales: ₹${dailyReport.profit.totalSales}`, 20, y);
-    y += 7;
-    doc.text(`Total Expenses: ₹${dailyReport.profit.totalExpenses}`, 20, y);
-    y += 7;
-    doc.setFontSize(12);
-    doc.text(`Net Profit: ₹${dailyReport.profit.netProfit}`, 20, y);
+    let y = 70;
+    
+    // Helper function to create colored section boxes
+    const createSection = (title, items, color) => {
+      // Section box
+      doc.setDrawColor(color.r, color.g, color.b);
+      doc.setFillColor(color.r + 230, color.g + 230, color.b + 230);
+      doc.roundedRect(15, y, 180, 15 + (items.length * 8), 3, 3, 'FD');
+      
+      // Title
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(color.r, color.g, color.b);
+      doc.text(title, 20, y + 8);
+      
+      // Divider
+      doc.setDrawColor(color.r, color.g, color.b);
+      doc.setLineWidth(0.3);
+      doc.line(20, y + 11, 190, y + 11);
+      
+      // Items
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      items.forEach((item, idx) => {
+        doc.setTextColor(50, 50, 50);
+        doc.text(item.label, 25, y + 18 + (idx * 8));
+        doc.setTextColor(80, 80, 80);
+        doc.text(item.value, 80, y + 18 + (idx * 8));
+      });
+      
+      y += 25 + (items.length * 8);
+    };
+    
+    // Purchases Section - Green
+    createSection('Paddy Purchases', [
+      { label: 'Total Purchases:', value: `${dailyReport.purchases.count}` },
+      { label: 'Total Hamali:', value: `₹${dailyReport.purchases.totalHamali}` }
+    ], { r: 22, g: 163, b: 74 }); // Green
+    
+    // Milling Section - Blue
+    createSection('Milling', [
+      { label: 'Total Milled:', value: `${dailyReport.milling.totalQuantity} Qu` }
+    ], { r: 37, g: 99, b: 235 }); // Blue
+    
+    // Expenses Section - Red
+    createSection('Expenses', [
+      { label: 'Total Expenses:', value: `₹${dailyReport.expenses.total}` }
+    ], { r: 220, g: 38, b: 38 }); // Red
+    
+    // Sales Section - Purple
+    createSection('Sales', [
+      { label: 'Total Sales:', value: `₹${dailyReport.sales.total}` }
+    ], { r: 147, g: 51, b: 234 }); // Purple
+    
+    // Profit/Loss Section - Orange/Yellow based on profit
+    const isProfit = dailyReport.profit.netProfit >= 0;
+    createSection('Profit/Loss Summary', [
+      { label: 'Total Sales:', value: `₹${dailyReport.profit.totalSales}` },
+      { label: 'Total Expenses:', value: `₹${dailyReport.profit.totalExpenses}` },
+      { label: 'Net Profit/Loss:', value: `₹${dailyReport.profit.netProfit}` }
+    ], isProfit ? { r: 217, g: 119, b: 6 } : { r: 220, g: 38, b: 38 }); // Orange for profit, Red for loss
+    
+    // Footer
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text('© Ajmeri Industries - All Rights Reserved', 105, 290, { align: 'center' });
 
     doc.save(`Daily_Report_${date.replace(/\//g, '_')}.pdf`);
   };
@@ -422,7 +466,7 @@ const Reports = () => {
     const doc = new jsPDF();
     
     doc.setFontSize(20);
-    doc.text('Ajmeri Industries - Add Paddy History', 20, 20);
+    doc.text('Ajmeri Industries - Government Paddy History', 20, 20);
     doc.setFontSize(12);
     doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 30);
 
@@ -582,7 +626,7 @@ const Reports = () => {
                 : 'text-gray-500'
             }`}
           >
-            {tab === 'addPaddy' ? 'Add Paddy' : 
+            {tab === 'addPaddy' ? 'Government Paddy' : 
              tab === 'purchasePaddy' ? 'Purchase Paddy' : 
              tab === 'purchaseRice' ? 'Purchase Rice' : 
              tab === 'milling' ? 'Milling' : 
@@ -868,7 +912,7 @@ const Reports = () => {
           {activeTab === 'addPaddy' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold">Add Paddy History</h3>
+                <h3 className="text-lg font-semibold">Government Paddy History</h3>
                 <button
                   onClick={() => handleDeleteAll('purchasePaddy')}
                   className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm font-medium"

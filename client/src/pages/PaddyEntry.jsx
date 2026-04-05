@@ -159,7 +159,7 @@ const PaddyEntry = () => {
       {/* Form Section */}
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-xl font-bold text-gray-800 mb-4">
-          {editingId ? 'Edit Paddy Entry' : 'Add Paddy Purchase'}
+          {editingId ? 'Edit Government Paddy Entry' : 'Add Government Paddy Purchase'}
         </h2>
 
         {message && (

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createMilling, getMillingProcesses, deleteMilling, getErrorMessage } from '../services/api';
+import { createMilling, getMillingProcesses, deleteMilling, getErrorMessage, getStock } from '../services/api';
 import { generateMillingPDF } from '../utils/pdfGenerator';
 
 const MillingEntry = () => {
@@ -23,10 +23,21 @@ const MillingEntry = () => {
     wastage: ''
   });
   const [showPreview, setShowPreview] = useState(false);
+  const [currentStock, setCurrentStock] = useState(null);
 
   useEffect(() => {
     fetchMillingProcesses();
+    fetchStock();
   }, []);
+
+  const fetchStock = async () => {
+    try {
+      const response = await getStock();
+      setCurrentStock(response.data.data);
+    } catch (error) {
+      console.error('Error fetching stock:', error);
+    }
+  };
 
   const fetchMillingProcesses = async () => {
     try {
@@ -98,6 +109,18 @@ const MillingEntry = () => {
   };
 
   const handleConfirmSave = async () => {
+    // Validate stock availability
+    if (currentStock && currentStock.paddy) {
+      const millingQuantity = parseFloat(formData.quantity) || 0;
+      const availableStock = currentStock.paddy.quantity || 0;
+      
+      if (millingQuantity > availableStock) {
+        setMessage(`⚠️ Warning: Milling quantity (${millingQuantity} ${formData.unit}) exceeds available paddy stock (${availableStock} ${currentStock.paddy.unit}). Stock will be set to 0.`);
+        setMessageType('warning');
+        // Allow the operation but warn the user - backend will cap at 0
+      }
+    }
+
     setLoading(true);
     setMessage('Saving milling entry...');
     setMessageType('info');
@@ -117,6 +140,10 @@ const MillingEntry = () => {
       setMessage('✅ Milling entry saved successfully!');
       setMessageType('success');
       setShowPreview(false);
+      
+      // Refresh stock and milling data
+      fetchStock();
+      fetchMillingProcesses();
       
       setFormData({
         date: new Date().toISOString().split('T')[0],

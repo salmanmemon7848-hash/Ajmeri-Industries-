@@ -57,7 +57,7 @@ export const generatePaddyPDF = (data) => {
   const doc = new jsPDF();
   
   // Add professional header
-  let y = addHeader(doc, 'Paddy Entry', 'Add Paddy Purchase Record');
+  let y = addHeader(doc, 'Government Paddy', 'Add Government Paddy Purchase Record');
   
   // Create a styled box for details
   doc.setDrawColor(200, 200, 200);

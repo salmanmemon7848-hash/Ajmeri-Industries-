@@ -444,10 +444,24 @@ const updateStockInternal = async (product, quantityChange, bagsChange = 0) => {
   
   const updates = {};
   if (product === 'paddy') {
-    updates.paddy_quantity = (current?.paddy_quantity || 0) + parseFloat(quantityChange);
-    updates.paddy_bags = (current?.paddy_bags || 0) + parseInt(bagsChange);
+    // Prevent negative paddy stock
+    const newPaddyQuantity = (current?.paddy_quantity || 0) + parseFloat(quantityChange);
+    updates.paddy_quantity = Math.max(0, newPaddyQuantity); // Cap at 0 minimum
+    
+    // Calculate actual change to apply to bags proportionally
+    const actualChange = updates.paddy_quantity - (current?.paddy_quantity || 0);
+    if (bagsChange !== 0 && current?.paddy_quantity > 0) {
+      // Proportional bags adjustment based on actual quantity change
+      const ratio = actualChange / (current?.paddy_quantity || 1);
+      updates.paddy_bags = Math.max(0, (current?.paddy_bags || 0) + Math.round(parseInt(bagsChange) * ratio));
+    } else if (actualChange <= 0) {
+      // If stock is being reduced to 0, set bags to 0
+      updates.paddy_bags = updates.paddy_quantity === 0 ? 0 : (current?.paddy_bags || 0) + parseInt(bagsChange);
+    }
   } else {
-    updates[`${product}_quantity`] = (current?.[`${product}_quantity`] || 0) + parseFloat(quantityChange);
+    // Prevent negative stock for other products too
+    const newQuantity = (current?.[`${product}_quantity`] || 0) + parseFloat(quantityChange);
+    updates[`${product}_quantity`] = Math.max(0, newQuantity); // Cap at 0 minimum
   }
   
   await supabase.from('stock').update(updates).eq('id', 1);
@@ -508,37 +522,66 @@ export const deleteAllWorkers = async () => {
 export const getDailyReport = async () => {
   const today = new Date().toISOString().split('T')[0];
   
-  const { data: purchases } = await supabase
+  // Get today's paddy purchases (Government Paddy)
+  const { data: paddyPurchases } = await supabase
     .from('paddy_purchases')
     .select('*')
-    .gte('date', today);
+    .eq('date', today);
   
+  // Get today's regular purchases (Purchase Paddy/Rice)
+  const { data: purchases } = await supabase
+    .from('purchases')
+    .select('*')
+    .eq('date', today);
+  
+  // Get today's expenses
   const { data: expenses } = await supabase
     .from('expenses')
     .select('*')
-    .gte('date', today);
+    .eq('date', today);
   
+  // Get today's sales
   const { data: sales } = await supabase
     .from('sales')
     .select('*')
-    .gte('date', today);
+    .eq('date', today);
   
+  // Get today's milling
   const { data: milling } = await supabase
     .from('milling_processes')
     .select('*')
-    .gte('date', today);
+    .eq('date', today);
   
+  // Calculate totals
   const totalSales = sales?.reduce((s, x) => s + (parseFloat(x.total_amount) || 0), 0) || 0;
   const totalExpenses = expenses?.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0) || 0;
-  const totalHamali = purchases?.reduce((s, p) => s + (parseFloat(p.hamali) || 0), 0) || 0;
+  const totalHamaliPaddy = paddyPurchases?.reduce((s, p) => s + (parseFloat(p.hamali) || 0), 0) || 0;
+  const totalHamaliPurchases = purchases?.reduce((s, p) => s + (parseFloat(p.total_hamali) || 0), 0) || 0;
+  const totalHamali = totalHamaliPaddy + totalHamaliPurchases;
   
   return { data: { success: true, data: {
     date: new Date().toISOString(),
-    purchases: { count: purchases?.length || 0, totalHamali },
-    milling: { totalQuantity: milling?.reduce((s, m) => s + (parseFloat(m.quantity_milled) || 0), 0) || 0 },
-    expenses: { total: totalExpenses },
-    sales: { total: totalSales },
-    profit: { totalSales, totalExpenses, netProfit: totalSales - totalExpenses }
+    purchases: { 
+      count: (paddyPurchases?.length || 0) + (purchases?.length || 0), 
+      totalHamali 
+    },
+    milling: { 
+      totalQuantity: milling?.reduce((s, m) => s + (parseFloat(m.quantity_milled) || 0), 0) || 0,
+      count: milling?.length || 0
+    },
+    expenses: { 
+      total: totalExpenses,
+      count: expenses?.length || 0
+    },
+    sales: { 
+      total: totalSales,
+      count: sales?.length || 0
+    },
+    profit: { 
+      totalSales, 
+      totalExpenses, 
+      netProfit: totalSales - totalExpenses 
+    }
   }}};
 };
 
