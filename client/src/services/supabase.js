@@ -175,6 +175,32 @@ export const addExpense = async (expense) => {
   return { data: { success: true, data } };
 };
 
+export const updateExpense = async (id, expense) => {
+  const dbExpense = {
+    category: expense.category,
+    description: expense.description,
+    amount: expense.amount,
+    date: expense.date,
+    updated_at: now()
+  };
+  
+  const { error } = await supabase
+    .from('expenses')
+    .update(dbExpense)
+    .eq('id', id);
+  if (error) throw error;
+  return { data: { success: true } };
+};
+
+export const deleteExpense = async (id) => {
+  const { error } = await supabase
+    .from('expenses')
+    .delete()
+    .eq('id', id);
+  if (error) throw error;
+  return { data: { success: true } };
+};
+
 // Workers
 export const getWorkers = async () => {
   const { data, error } = await supabase
@@ -277,6 +303,37 @@ export const getPurchases = async (type = null) => {
   return { data: { success: true, data: transformedData } };
 };
 
+export const updatePurchase = async (id, purchase) => {
+  const dbPurchase = {
+    date: purchase.date,
+    supplier_name: purchase.supplierName,
+    quantity: purchase.quantity,
+    rate: purchase.rate,
+    total_amount: purchase.totalAmount,
+    rice_mill_hamali: purchase.riceMillHamali,
+    warehouse_hamali: purchase.warehouseHamali,
+    total_hamali: purchase.totalHamali,
+    notes: purchase.notes,
+    updated_at: now()
+  };
+  
+  const { error } = await supabase
+    .from('purchases')
+    .update(dbPurchase)
+    .eq('id', id);
+  if (error) throw error;
+  return { data: { success: true } };
+};
+
+export const deletePurchase = async (id) => {
+  const { error } = await supabase
+    .from('purchases')
+    .delete()
+    .eq('id', id);
+  if (error) throw error;
+  return { data: { success: true } };
+};
+
 // Sales
 export const getSales = async () => {
   const { data, error } = await supabase
@@ -330,6 +387,35 @@ export const addSale = async (sale) => {
   return { data: { success: true, data } };
 };
 
+export const updateSale = async (id, sale) => {
+  const dbSale = {
+    buyer_name: sale.buyerName,
+    product: sale.product,
+    quantity: sale.quantity,
+    rate: sale.rate,
+    total_amount: sale.totalAmount,
+    description: sale.description,
+    date: sale.date,
+    updated_at: now()
+  };
+  
+  const { error } = await supabase
+    .from('sales')
+    .update(dbSale)
+    .eq('id', id);
+  if (error) throw error;
+  return { data: { success: true } };
+};
+
+export const deleteSale = async (id) => {
+  const { error } = await supabase
+    .from('sales')
+    .delete()
+    .eq('id', id);
+  if (error) throw error;
+  return { data: { success: true } };
+};
+
 // Stock
 export const getStock = async () => {
   const { data, error } = await supabase
@@ -379,6 +465,43 @@ export const resetAllData = async () => {
     broken_quantity: 0, rafi_quantity: 0, husk_quantity: 0
   }).eq('id', 1);
   return { data: { success: true, message: 'All data reset' } };
+};
+
+// Delete all data for specific sections
+export const deleteAllPurchases = async () => {
+  const { error } = await supabase.from('purchases').delete().neq('id', 0);
+  if (error) throw error;
+  return { data: { success: true, message: 'All purchases deleted' } };
+};
+
+export const deleteAllSales = async () => {
+  const { error } = await supabase.from('sales').delete().neq('id', 0);
+  if (error) throw error;
+  return { data: { success: true, message: 'All sales deleted' } };
+};
+
+export const deleteAllExpenses = async () => {
+  const { error } = await supabase.from('expenses').delete().neq('id', 0);
+  if (error) throw error;
+  return { data: { success: true, message: 'All expenses deleted' } };
+};
+
+export const deleteAllMilling = async () => {
+  const { error } = await supabase.from('milling_processes').delete().neq('id', 0);
+  if (error) throw error;
+  return { data: { success: true, message: 'All milling records deleted' } };
+};
+
+export const deleteAllPaddyPurchases = async () => {
+  const { error } = await supabase.from('paddy_purchases').delete().neq('id', 0);
+  if (error) throw error;
+  return { data: { success: true, message: 'All paddy purchases deleted' } };
+};
+
+export const deleteAllWorkers = async () => {
+  const { error } = await supabase.from('workers').delete().neq('id', 0);
+  if (error) throw error;
+  return { data: { success: true, message: 'All workers deleted' } };
 };
 
 // Reports
@@ -508,13 +631,9 @@ export const deleteWorker = () => Promise.resolve({ data: { success: true } });
 export const getExpensesByDate = () => getExpenses();
 export const getDailyExpenses = () => getExpenses();
 export const getMonthlyExpenses = () => getExpenses();
-export const updateExpense = () => Promise.resolve({ data: { success: true } });
-export const deleteExpense = () => Promise.resolve({ data: { success: true } });
 export const getSalesByDate = () => getSales();
 export const getDailySales = () => getSales();
 export const getMonthlySales = () => getSales();
-export const updateSale = () => Promise.resolve({ data: { success: true } });
-export const deleteSale = () => Promise.resolve({ data: { success: true } });
 export const processMilling = (data) => createMilling(data);
 export const getMillingByDate = () => getMillingProcesses();
 export const getPaddyPurchasesByDate = () => getPaddyPurchases();

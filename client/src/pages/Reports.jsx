@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getDailyReport, getMonthlyReport, getStock, getExpenses, getWorkers, getPaddyPurchases, getPurchases, getMillingProcesses, getSales } from '../services/api';
+import { getDailyReport, getMonthlyReport, getStock, getExpenses, getWorkers, getPaddyPurchases, getPurchases, getMillingProcesses, getSales, deleteAllPurchases, deleteAllSales, deleteAllExpenses, deleteAllMilling, deleteAllPaddyPurchases, deleteAllWorkers } from '../services/api';
 import { jsPDF } from 'jspdf';
 
 const Reports = () => {
@@ -16,6 +16,9 @@ const Reports = () => {
   const [loading, setLoading] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteType, setDeleteType] = useState('');
+  const [deleteMessage, setDeleteMessage] = useState('');
 
   useEffect(() => {
     fetchDailyReport();
@@ -119,6 +122,77 @@ const Reports = () => {
     } catch (error) {
       console.error('Error fetching sales:', error);
     }
+  };
+
+  // Delete All handlers
+  const handleDeleteAll = (type) => {
+    setDeleteType(type);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteAll = async () => {
+    try {
+      setLoading(true);
+      let result;
+      
+      switch (deleteType) {
+        case 'stock':
+          // Reset stock to zero
+          await import('../services/api').then(api => api.updateStock({
+            paddy_quantity: 0, paddy_bags: 0,
+            rice_quantity: 0, bran_quantity: 0,
+            broken_quantity: 0, rafi_quantity: 0, husk_quantity: 0
+          }));
+          result = { message: 'Stock reset successfully' };
+          break;
+        case 'purchasePaddy':
+          result = await deleteAllPaddyPurchases();
+          break;
+        case 'purchaseRice':
+        case 'purchases':
+          result = await deleteAllPurchases();
+          break;
+        case 'sales':
+          result = await deleteAllSales();
+          break;
+        case 'expenses':
+          result = await deleteAllExpenses();
+          break;
+        case 'milling':
+          result = await deleteAllMilling();
+          break;
+        case 'workers':
+          result = await deleteAllWorkers();
+          break;
+        default:
+          throw new Error('Invalid delete type');
+      }
+      
+      setDeleteMessage(`✅ ${result.message || 'Deleted successfully'}`);
+      setShowDeleteModal(false);
+      
+      // Refresh data
+      if (deleteType === 'stock') fetchStock();
+      else if (deleteType === 'purchasePaddy') fetchPaddyPurchases();
+      else if (deleteType === 'purchaseRice' || deleteType === 'purchases') fetchPurchases();
+      else if (deleteType === 'sales') fetchSales();
+      else if (deleteType === 'expenses') fetchExpenses();
+      else if (deleteType === 'milling') fetchMillingProcesses();
+      else if (deleteType === 'workers') fetchWorkers();
+      
+      setTimeout(() => setDeleteMessage(''), 3000);
+    } catch (error) {
+      setDeleteMessage(`❌ Error: ${error.message}`);
+      setShowDeleteModal(false);
+      setTimeout(() => setDeleteMessage(''), 3000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cancelDeleteAll = () => {
+    setShowDeleteModal(false);
+    setDeleteType('');
   };
 
   const generateDailyPDF = () => {
@@ -647,7 +721,15 @@ const Reports = () => {
 
           {activeTab === 'stock' && stock && (
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold">Stock Report - {new Date().toLocaleDateString()}</h3>
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">Stock Report - {new Date().toLocaleDateString()}</h3>
+                <button
+                  onClick={() => handleDeleteAll('stock')}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm font-medium"
+                >
+                  Delete All Stock
+                </button>
+              </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-green-50 p-4 rounded-lg">
@@ -681,7 +763,15 @@ const Reports = () => {
 
           {activeTab === 'expenses' && (
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold">Expense History</h3>
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">Expense History</h3>
+                <button
+                  onClick={() => handleDeleteAll('expenses')}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm font-medium"
+                >
+                  Delete All Expenses
+                </button>
+              </div>
               
               {expenses.length === 0 ? (
                 <div className="text-center text-gray-500 py-8">No expenses recorded yet.</div>
@@ -716,7 +806,15 @@ const Reports = () => {
 
           {activeTab === 'workers' && (
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold">Worker History</h3>
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">Worker History</h3>
+                <button
+                  onClick={() => handleDeleteAll('workers')}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm font-medium"
+                >
+                  Delete All Workers
+                </button>
+              </div>
               
               {workers.length === 0 ? (
                 <div className="text-center text-gray-500 py-8">No workers added yet.</div>
@@ -769,7 +867,15 @@ const Reports = () => {
 
           {activeTab === 'addPaddy' && (
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold">Add Paddy History</h3>
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">Add Paddy History</h3>
+                <button
+                  onClick={() => handleDeleteAll('purchasePaddy')}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm font-medium"
+                >
+                  Delete All Entries
+                </button>
+              </div>
               
               {paddyPurchases.length === 0 ? (
                 <div className="text-center text-gray-500 py-8">No paddy entries recorded yet.</div>
@@ -810,7 +916,15 @@ const Reports = () => {
 
           {activeTab === 'purchasePaddy' && (
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold">Purchase Paddy History</h3>
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">Purchase Paddy History</h3>
+                <button
+                  onClick={() => handleDeleteAll('purchasePaddy')}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm font-medium"
+                >
+                  Delete All Purchases
+                </button>
+              </div>
               
               {purchases.filter(p => p.type === 'paddy').length === 0 ? (
                 <div className="text-center text-gray-500 py-8">No paddy purchases recorded yet.</div>
@@ -847,7 +961,15 @@ const Reports = () => {
 
           {activeTab === 'purchaseRice' && (
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold">Purchase Rice History</h3>
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">Purchase Rice History</h3>
+                <button
+                  onClick={() => handleDeleteAll('purchaseRice')}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm font-medium"
+                >
+                  Delete All Purchases
+                </button>
+              </div>
               
               {purchases.filter(p => p.type === 'rice').length === 0 ? (
                 <div className="text-center text-gray-500 py-8">No rice purchases recorded yet.</div>
@@ -882,7 +1004,15 @@ const Reports = () => {
 
           {activeTab === 'milling' && (
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold">Milling History</h3>
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">Milling History</h3>
+                <button
+                  onClick={() => handleDeleteAll('milling')}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm font-medium"
+                >
+                  Delete All Records
+                </button>
+              </div>
               
               {millingProcesses.length === 0 ? (
                 <div className="text-center text-gray-500 py-8">No milling entries recorded yet.</div>
@@ -923,7 +1053,15 @@ const Reports = () => {
 
           {activeTab === 'sales' && (
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold">Sales History</h3>
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">Sales History</h3>
+                <button
+                  onClick={() => handleDeleteAll('sales')}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm font-medium"
+                >
+                  Delete All Sales
+                </button>
+              </div>
               
               {sales.length === 0 ? (
                 <div className="text-center text-gray-500 py-8">No sales recorded yet.</div>
@@ -959,6 +1097,48 @@ const Reports = () => {
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <div className="mb-4">
+              <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-center text-gray-900 mb-2">⚠️ Warning: Delete All Data?</h3>
+              <p className="text-sm text-gray-600 text-center">
+                This will permanently delete ALL records in this section. This action cannot be undone!
+              </p>
+            </div>
+            
+            <div className="space-y-3">
+              <button
+                onClick={cancelDeleteAll}
+                className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteAll}
+                disabled={loading}
+                className="w-full px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 font-medium disabled:opacity-50"
+              >
+                {loading ? 'Deleting...' : 'Yes, Delete All'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Success/Error Message */}
+      {deleteMessage && (
+        <div className="fixed bottom-4 right-4 bg-white border-l-4 border-green-500 shadow-lg rounded-lg p-4 z-50 animate-fade-in">
+          <p className="text-sm font-medium text-gray-800">{deleteMessage}</p>
         </div>
       )}
     </div>
