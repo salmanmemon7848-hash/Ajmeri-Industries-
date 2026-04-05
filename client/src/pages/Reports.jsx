@@ -387,64 +387,43 @@ const Reports = () => {
 
     const doc = new jsPDF();
     
-    doc.setFontSize(20);
-    doc.text('Ajmeri Industries - Monthly Report', 20, 20);
-    doc.setFontSize(12);
-    doc.text(`Month: ${monthlyReport.month}`, 20, 30);
-
-    let y = 50;
+    // Add colorful header
+    let y = addColorfulHeader(doc, 'Monthly Report', monthlyReport.month);
     
-    // Purchases
-    doc.setFontSize(14);
-    doc.text('Paddy Purchases', 20, y);
-    y += 10;
-    doc.setFontSize(10);
-    doc.text(`Total Quantity: ${monthlyReport.purchases.totalQuantity} Qu`, 20, y);
-    y += 7;
-    doc.text(`Total Hamali: ₹${monthlyReport.purchases.totalHamali}`, 20, y);
-    y += 15;
-
-    // Milling
-    doc.setFontSize(14);
-    doc.text('Milling', 20, y);
-    y += 10;
-    doc.setFontSize(10);
-    doc.text(`Total Milled: ${monthlyReport.milling.totalQuantity} Qu`, 20, y);
-    y += 15;
-
-    // Expenses
-    doc.setFontSize(14);
-    doc.text('Expenses', 20, y);
-    y += 10;
-    doc.setFontSize(10);
-    doc.text(`Operational: ₹${monthlyReport.expenses.operational}`, 20, y);
-    y += 7;
-    doc.text(`Worker Payments: ₹${monthlyReport.expenses.workerPayments}`, 20, y);
-    y += 7;
-    doc.text(`Hamali: ₹${monthlyReport.expenses.hamali}`, 20, y);
-    y += 7;
-    doc.text(`Total: ₹${monthlyReport.expenses.total}`, 20, y);
-    y += 15;
-
-    // Sales
-    doc.setFontSize(14);
-    doc.text('Sales', 20, y);
-    y += 10;
-    doc.setFontSize(10);
-    doc.text(`Total Sales: ₹${monthlyReport.sales.total}`, 20, y);
-    y += 15;
-
-    // Profit
-    doc.setFontSize(14);
-    doc.text('Profit/Loss', 20, y);
-    y += 10;
-    doc.setFontSize(10);
-    doc.text(`Total Sales: ₹${monthlyReport.profit.totalSales}`, 20, y);
-    y += 7;
-    doc.text(`Total Expenses: ₹${monthlyReport.profit.totalExpenses}`, 20, y);
-    y += 7;
-    doc.setFontSize(12);
-    doc.text(`Net Profit: ₹${monthlyReport.profit.netProfit}`, 20, y);
+    // Purchases Section - Green
+    y = createColorfulSection(doc, y, 'Paddy Purchases', [
+      { label: 'Total Quantity:', value: `${monthlyReport.purchases.totalQuantity} Qu` },
+      { label: 'Total Hamali:', value: `₹${monthlyReport.purchases.totalHamali}` }
+    ], { r: 22, g: 163, b: 74 });
+    
+    // Milling Section - Blue
+    y = createColorfulSection(doc, y, 'Milling', [
+      { label: 'Total Milled:', value: `${monthlyReport.milling.totalQuantity} Qu` }
+    ], { r: 37, g: 99, b: 235 });
+    
+    // Expenses Section - Red
+    y = createColorfulSection(doc, y, 'Expenses', [
+      { label: 'Operational:', value: `₹${monthlyReport.expenses.operational}` },
+      { label: 'Worker Payments:', value: `₹${monthlyReport.expenses.workerPayments}` },
+      { label: 'Hamali:', value: `₹${monthlyReport.expenses.hamali}` },
+      { label: 'Total:', value: `₹${monthlyReport.expenses.total}` }
+    ], { r: 220, g: 38, b: 38 });
+    
+    // Sales Section - Purple
+    y = createColorfulSection(doc, y, 'Sales', [
+      { label: 'Total Sales:', value: `₹${monthlyReport.sales.total}` }
+    ], { r: 147, g: 51, b: 234 });
+    
+    // Profit/Loss Section
+    const isProfit = monthlyReport.profit.netProfit >= 0;
+    y = createColorfulSection(doc, y, 'Profit/Loss Summary', [
+      { label: 'Total Sales:', value: `₹${monthlyReport.profit.totalSales}` },
+      { label: 'Total Expenses:', value: `₹${monthlyReport.profit.totalExpenses}` },
+      { label: 'Net Profit:', value: `₹${monthlyReport.profit.netProfit}` }
+    ], isProfit ? { r: 217, g: 119, b: 6 } : { r: 220, g: 38, b: 38 });
+    
+    // Footer
+    addColorfulFooter(doc);
 
     doc.save(`Monthly_Report_${monthlyReport.month.replace(/\s/g, '_')}.pdf`);
   };
@@ -454,30 +433,21 @@ const Reports = () => {
 
     const doc = new jsPDF();
     
-    doc.setFontSize(20);
-    doc.text('Ajmeri Industries - Stock Report', 20, 20);
-    doc.setFontSize(12);
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 30);
-
-    let y = 50;
-    doc.setFontSize(14);
-    doc.text('Current Stock', 20, y);
-    y += 15;
-
-    doc.setFontSize(10);
-    const items = [
-      { name: 'Paddy', qty: `${stock.paddy.quantity} ${stock.paddy.unit} (${stock.paddy.bags} bags)` },
-      { name: 'Rice', qty: `${stock.rice.quantity} ${stock.rice.unit}` },
-      { name: 'Bran', qty: `${stock.bran.quantity} ${stock.bran.unit}` },
-      { name: 'Broken', qty: `${stock.broken.quantity} ${stock.broken.unit}` },
-      { name: 'Rafi', qty: `${stock.rafi.quantity} ${stock.rafi.unit}` },
-      { name: 'Husk', qty: `${stock.husk.quantity} ${stock.husk.unit}` },
-    ];
-
-    items.forEach(item => {
-      doc.text(`${item.name}: ${item.qty}`, 20, y);
-      y += 10;
-    });
+    // Add colorful header
+    let y = addColorfulHeader(doc, 'Stock Report', `Date: ${new Date().toLocaleDateString()}`);
+    
+    // Stock Items Section - Teal
+    y = createColorfulSection(doc, y, 'Current Stock Levels', [
+      { label: 'Paddy:', value: `${stock.paddy.quantity} ${stock.paddy.unit} (${stock.paddy.bags} bags)` },
+      { label: 'Rice:', value: `${stock.rice.quantity} ${stock.rice.unit}` },
+      { label: 'Bran:', value: `${stock.bran.quantity} ${stock.bran.unit}` },
+      { label: 'Broken:', value: `${stock.broken.quantity} ${stock.broken.unit}` },
+      { label: 'Rafi:', value: `${stock.rafi.quantity} ${stock.rafi.unit}` },
+      { label: 'Husk:', value: `${stock.husk.quantity} ${stock.husk.unit}` }
+    ], { r: 20, g: 184, b: 166 }); // Teal
+    
+    // Footer
+    addColorfulFooter(doc);
 
     doc.save(`Stock_Report_${new Date().toISOString().split('T')[0]}.pdf`);
   };
@@ -485,194 +455,198 @@ const Reports = () => {
   const generateExpensePDF = () => {
     const doc = new jsPDF();
     
-    doc.setFontSize(20);
-    doc.text('Ajmeri Industries - Expense History', 20, 20);
-    doc.setFontSize(12);
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 30);
-
-    let y = 50;
-    doc.setFontSize(14);
-    doc.text('All Expenses', 20, y);
-    y += 15;
-
-    doc.setFontSize(10);
-    expenses.forEach((expense, index) => {
-      if (y > 270) {
-        doc.addPage();
-        y = 20;
-      }
-      doc.text(`${index + 1}. ${new Date(expense.date).toLocaleDateString()} - ${expense.category}`, 20, y);
-      y += 7;
-      doc.text(`   Amount: ₹${expense.amount}${expense.notes ? ' | Notes: ' + expense.notes : ''}`, 20, y);
-      y += 10;
-    });
+    // Add colorful header
+    let y = addColorfulHeader(doc, 'Expense History', `Date: ${new Date().toLocaleDateString()}`);
+    
+    if (expenses.length === 0) {
+      doc.setFontSize(12);
+      doc.setTextColor(150, 150, 150);
+      doc.text('No expenses recorded yet.', 105, y, { align: 'center' });
+    } else {
+      // Group by date for better organization
+      const groupedExpenses = {};
+      expenses.forEach(expense => {
+        if (!groupedExpenses[expense.date]) groupedExpenses[expense.date] = [];
+        groupedExpenses[expense.date].push(expense);
+      });
+      
+      Object.keys(groupedExpenses).sort().reverse().forEach(date => {
+        if (y > 250) {
+          doc.addPage();
+          y = 65;
+        }
+        
+        // Date header
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(30, 64, 175);
+        doc.text(new Date(date).toLocaleDateString(), 20, y);
+        y += 8;
+        
+        // Expenses for this date
+        groupedExpenses[date].forEach((expense, idx) => {
+          if (y > 270) {
+            doc.addPage();
+            y = 65;
+          }
+          
+          y = createColorfulSection(doc, y, `${expense.category}`, [
+            { label: 'Amount:', value: `₹${expense.amount}` },
+            ...(expense.notes ? [{ label: 'Notes:', value: expense.notes }] : [])
+          ], { r: 220, g: 38, b: 38 }); // Red
+          
+          y += 5; // Small spacing between items
+        });
+        
+        y += 5; // Spacing between dates
+      });
+    }
+    
+    // Footer
+    addColorfulFooter(doc);
 
     doc.save(`Expense_History_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   const generateWorkerPDF = () => {
     const doc = new jsPDF();
+    let y = addColorfulHeader(doc, 'Worker History', `Date: ${new Date().toLocaleDateString()}`);
     
-    doc.setFontSize(20);
-    doc.text('Ajmeri Industries - Worker History', 20, 20);
-    doc.setFontSize(12);
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 30);
-
-    let y = 50;
-    doc.setFontSize(14);
-    doc.text('Worker Payments', 20, y);
-    y += 15;
-
-    doc.setFontSize(10);
-    workers.forEach((worker, index) => {
-      if (worker.payments && worker.payments.length > 0) {
-        if (y > 250) {
-          doc.addPage();
-          y = 20;
-        }
-        doc.text(`${index + 1}. ${worker.name} (${worker.role})`, 20, y);
-        y += 7;
-        worker.payments.forEach((payment, pidx) => {
-          doc.text(`   ${pidx + 1}. ${new Date(payment.date).toLocaleDateString()} - ₹${payment.amount} (${payment.type})`, 20, y);
-          y += 7;
-        });
-        y += 5;
-      }
-    });
-
+    if (workers.length === 0) {
+      doc.setFontSize(12);
+      doc.setTextColor(150, 150, 150);
+      doc.text('No workers added yet.', 105, y, { align: 'center' });
+    } else {
+      workers.forEach((worker, index) => {
+        if (y > 240) { doc.addPage(); y = 65; }
+        
+        y = createColorfulSection(doc, y, `${worker.name} (${worker.role})`, [
+          ...(worker.payments && worker.payments.length > 0 ? worker.payments.map((p, i) => ({
+            label: `Payment ${i + 1}:`,
+            value: `${new Date(p.date).toLocaleDateString()} - ₹${p.amount} (${p.type})`
+          })) : [{ label: 'Status:', value: 'No payments recorded' }])
+        ], { r: 168, g: 85, b: 247 }); // Purple
+        
+        y += 3;
+      });
+    }
+    
+    addColorfulFooter(doc);
     doc.save(`Worker_History_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   const generatePaddyPurchasePDF = () => {
     const doc = new jsPDF();
+    let y = addColorfulHeader(doc, 'Government Paddy History', `Date: ${new Date().toLocaleDateString()}`);
     
-    doc.setFontSize(20);
-    doc.text('Ajmeri Industries - Government Paddy History', 20, 20);
-    doc.setFontSize(12);
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 30);
-
-    let y = 50;
-    doc.setFontSize(14);
-    doc.text('Paddy Entries', 20, y);
-    y += 15;
-
-    doc.setFontSize(10);
-    paddyPurchases.forEach((item, index) => {
-      if (y > 230) {
-        doc.addPage();
-        y = 20;
-      }
-      doc.text(`${index + 1}. ${new Date(item.date).toLocaleDateString()} - ${item.farmerName || item.source || 'N/A'}`, 20, y);
-      y += 7;
-      const totalQuintal = item.totalQuintal || ((item.totalQuantity || 0) / 2.5).toFixed(2);
-      doc.text(`   New: ${item.newQuantity || 0} Qu | Old: ${item.oldQuantity || 0} Qu`, 20, y);
-      y += 7;
-      doc.text(`   Total Bags: ${item.totalQuantity || 0} Qu | Total Quintal: ${totalQuintal} Qu`, 20, y);
-      y += 7;
-      doc.text(`   Hamali: ₹${item.totalHamali || 0}`, 20, y);
-      if (item.description) {
-        y += 7;
-        doc.text(`   Description: ${item.description.substring(0, 80)}${item.description.length > 80 ? '...' : ''}`, 20, y);
-      }
-      y += 10;
-    });
-
-    doc.save(`Add_Paddy_History_${new Date().toISOString().split('T')[0]}.pdf`);
+    if (paddyPurchases.length === 0) {
+      doc.setFontSize(12);
+      doc.setTextColor(150, 150, 150);
+      doc.text('No paddy entries recorded yet.', 105, y, { align: 'center' });
+    } else {
+      paddyPurchases.forEach((item, index) => {
+        if (y > 220) { doc.addPage(); y = 65; }
+        const totalQuintal = item.totalQuintal || ((item.totalQuantity || 0) / 2.5).toFixed(2);
+        
+        y = createColorfulSection(doc, y, `${item.farmerName || item.source || 'N/A'} - ${new Date(item.date).toLocaleDateString()}`, [
+          { label: 'New Bags:', value: `${item.newQuantity || 0} Qu` },
+          { label: 'Old Bags:', value: `${item.oldQuantity || 0} Qu` },
+          { label: 'Total Bags:', value: `${item.totalQuantity || 0} Qu` },
+          { label: 'Total Quintal:', value: `${totalQuintal} Qu` },
+          { label: 'Hamali:', value: `₹${item.totalHamali || 0}` },
+          ...(item.description ? [{ label: 'Description:', value: item.description.substring(0, 60) }] : [])
+        ], { r: 22, g: 163, b: 74 }); // Green
+        
+        y += 3;
+      });
+    }
+    
+    addColorfulFooter(doc);
+    doc.save(`Government_Paddy_History_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   const generatePurchaseHistoryPDF = (type) => {
     const doc = new jsPDF();
     const filteredPurchases = purchases.filter(p => p.type === type);
+    let y = addColorfulHeader(doc, `${type === 'paddy' ? 'Purchase Paddy' : 'Purchase Rice'} History`, `Date: ${new Date().toLocaleDateString()}`);
     
-    doc.setFontSize(20);
-    doc.text(`Ajmeri Industries - ${type === 'paddy' ? 'Purchase Paddy' : 'Purchase Rice'} History`, 20, 20);
-    doc.setFontSize(12);
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 30);
-
-    let y = 50;
-    doc.setFontSize(14);
-    doc.text(`${type === 'paddy' ? 'Paddy' : 'Rice'} Purchase Entries`, 20, y);
-    y += 15;
-
-    doc.setFontSize(10);
-    filteredPurchases.forEach((item, index) => {
-      if (y > 250) {
-        doc.addPage();
-        y = 20;
-      }
-      doc.text(`${index + 1}. ${new Date(item.date).toLocaleDateString()} - ${item.supplierName || 'N/A'}`, 20, y);
-      y += 7;
-      doc.text(`   Qty: ${item.quantity || 0} Qu | Rate: ₹${item.rate || 0}/Qu | Total: ₹${item.totalAmount || 0}`, 20, y);
-      y += 7;
-      if (type === 'paddy') {
-        doc.text(`   Hamali: ₹${item.totalHamali || 0}`, 20, y);
-        y += 7;
-      }
-      y += 3;
-    });
-
+    if (filteredPurchases.length === 0) {
+      doc.setFontSize(12);
+      doc.setTextColor(150, 150, 150);
+      doc.text(`No ${type} purchases recorded yet.`, 105, y, { align: 'center' });
+    } else {
+      filteredPurchases.forEach((item, index) => {
+        if (y > 230) { doc.addPage(); y = 65; }
+        
+        y = createColorfulSection(doc, y, `${item.supplierName || 'N/A'} - ${new Date(item.date).toLocaleDateString()}`, [
+          { label: 'Quantity:', value: `${item.quantity || 0} Qu` },
+          { label: 'Rate:', value: `₹${item.rate || 0}/Qu` },
+          { label: 'Total Amount:', value: `₹${item.totalAmount || 0}` },
+          ...(type === 'paddy' ? [{ label: 'Hamali:', value: `₹${item.totalHamali || 0}` }] : [])
+        ], { r: 245, g: 158, b: 66 }); // Orange
+        
+        y += 3;
+      });
+    }
+    
+    addColorfulFooter(doc);
     doc.save(`${type === 'paddy' ? 'Purchase_Paddy' : 'Purchase_Rice'}_History_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   const generateMillingPDF = () => {
     const doc = new jsPDF();
+    let y = addColorfulHeader(doc, 'Milling History', `Date: ${new Date().toLocaleDateString()}`);
     
-    doc.setFontSize(20);
-    doc.text('Ajmeri Industries - Milling History', 20, 20);
-    doc.setFontSize(12);
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 30);
-
-    let y = 50;
-    doc.setFontSize(14);
-    doc.text('Milling Entries', 20, y);
-    y += 15;
-
-    doc.setFontSize(10);
-    millingProcesses.forEach((item, index) => {
-      if (y > 220) {
-        doc.addPage();
-        y = 20;
-      }
-      doc.text(`${index + 1}. ${new Date(item.date).toLocaleDateString()}`, 20, y);
-      y += 7;
-      doc.text(`   Input: ${item.quantity || 0} ${item.unit || 'Qu'}`, 20, y);
-      y += 7;
-      doc.text(`   Output - Rice: ${item.rice || 0}, Bran: ${item.bran || 0}, Broken: ${item.broken || 0}`, 20, y);
-      y += 7;
-      doc.text(`            Rafi: ${item.rafi || 0}, Husk: ${item.husk || 0}, Wastage: ${item.wastage || 0}`, 20, y);
-      y += 10;
-    });
-
+    if (millingProcesses.length === 0) {
+      doc.setFontSize(12);
+      doc.setTextColor(150, 150, 150);
+      doc.text('No milling entries recorded yet.', 105, y, { align: 'center' });
+    } else {
+      millingProcesses.forEach((item, index) => {
+        if (y > 220) { doc.addPage(); y = 65; }
+        
+        y = createColorfulSection(doc, y, `${new Date(item.date).toLocaleDateString()} - Input: ${item.quantity || 0} ${item.unit || 'Qu'}`, [
+          { label: 'Rice (55%):', value: `${item.rice || 0} ${item.unit || 'Qu'}` },
+          { label: 'Bran (8%):', value: `${item.bran || 0} ${item.unit || 'Qu'}` },
+          { label: 'Broken (10%):', value: `${item.broken || 0} ${item.unit || 'Qu'}` },
+          { label: 'Rafi (1%):', value: `${item.rafi || 0} ${item.unit || 'Qu'}` },
+          { label: 'Husk (20%):', value: `${item.husk || 0} ${item.unit || 'Qu'}` },
+          { label: 'Wastage (6%):', value: `${item.wastage || 0} ${item.unit || 'Qu'}` }
+        ], { r: 37, g: 99, b: 235 }); // Blue
+        
+        y += 3;
+      });
+    }
+    
+    addColorfulFooter(doc);
     doc.save(`Milling_History_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   const generateSalesPDF = () => {
     const doc = new jsPDF();
+    let y = addColorfulHeader(doc, 'Sales History', `Date: ${new Date().toLocaleDateString()}`);
     
-    doc.setFontSize(20);
-    doc.text('Ajmeri Industries - Sales History', 20, 20);
-    doc.setFontSize(12);
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 30);
-
-    let y = 50;
-    doc.setFontSize(14);
-    doc.text('Sales Entries', 20, y);
-    y += 15;
-
-    doc.setFontSize(10);
-    sales.forEach((item, index) => {
-      if (y > 250) {
-        doc.addPage();
-        y = 20;
-      }
-      doc.text(`${index + 1}. ${new Date(item.date).toLocaleDateString()} - ${item.buyerName || 'N/A'}`, 20, y);
-      y += 7;
-      doc.text(`   Product: ${item.product || 'N/A'} | Qty: ${item.quantity || 0} ${item.unit || 'Qu'}`, 20, y);
-      y += 7;
-      doc.text(`   Rate: ₹${item.rate || 0}/${item.unit || 'Qu'} | Total: ₹${item.totalAmount || 0}`, 20, y);
-      y += 10;
-    });
-
+    if (sales.length === 0) {
+      doc.setFontSize(12);
+      doc.setTextColor(150, 150, 150);
+      doc.text('No sales recorded yet.', 105, y, { align: 'center' });
+    } else {
+      sales.forEach((item, index) => {
+        if (y > 230) { doc.addPage(); y = 65; }
+        
+        y = createColorfulSection(doc, y, `${item.buyerName || 'N/A'} - ${new Date(item.date).toLocaleDateString()}`, [
+          { label: 'Product:', value: item.product || 'N/A' },
+          { label: 'Quantity:', value: `${item.quantity || 0} ${item.unit || 'Qu'}` },
+          { label: 'Rate:', value: `₹${item.rate || 0}/${item.unit || 'Qu'}` },
+          { label: 'Total Amount:', value: `₹${item.totalAmount || 0}` },
+          ...(item.description ? [{ label: 'Description:', value: item.description.substring(0, 60) }] : [])
+        ], { r: 147, g: 51, b: 234 }); // Purple
+        
+        y += 3;
+      });
+    }
+    
+    addColorfulFooter(doc);
     doc.save(`Sales_History_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
