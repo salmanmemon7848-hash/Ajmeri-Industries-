@@ -2,6 +2,87 @@ import { useState, useEffect } from 'react';
 import { getDailyReport, getMonthlyReport, getStock, getExpenses, getWorkers, getPaddyPurchases, getPurchases, getMillingProcesses, getSales, deleteAllPurchases, deleteAllSales, deleteAllExpenses, deleteAllMilling, deleteAllPaddyPurchases, deleteAllWorkers } from '../services/api';
 import { jsPDF } from 'jspdf';
 
+// Helper function to add professional colorful header to PDFs
+const addColorfulHeader = (doc, title, subtitle) => {
+  // Company name with bold blue
+  doc.setFontSize(24);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(30, 64, 175); // Blue
+  doc.text('Ajmeri Industries', 105, 20, { align: 'center' });
+  
+  // Tagline
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100, 100, 100);
+  doc.text('Rice Mill Management System', 105, 28, { align: 'center' });
+  
+  // Divider line
+  doc.setDrawColor(30, 64, 175);
+  doc.setLineWidth(0.5);
+  doc.line(20, 32, 190, 32);
+  
+  // Report title
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(30, 30, 30);
+  doc.text(title, 105, 42, { align: 'center' });
+  
+  // Subtitle if provided
+  if (subtitle) {
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    doc.text(subtitle, 105, 50, { align: 'center' });
+  }
+  
+  // Date and time
+  const now = new Date();
+  const dateTime = `Generated: ${now.toLocaleDateString()} at ${now.toLocaleTimeString()}`;
+  doc.setFontSize(9);
+  doc.setTextColor(120, 120, 120);
+  doc.text(dateTime, 105, 58, { align: 'center' });
+  
+  return 65; // Return starting Y position
+};
+
+// Helper function to add footer
+const addColorfulFooter = (doc) => {
+  doc.setFontSize(8);
+  doc.setTextColor(150, 150, 150);
+  doc.text('© Ajmeri Industries - All Rights Reserved', 105, 290, { align: 'center' });
+};
+
+// Helper function to create colored section box
+const createColorfulSection = (doc, y, title, items, color) => {
+  // Section box
+  doc.setDrawColor(color.r, color.g, color.b);
+  doc.setFillColor(color.r + 230, color.g + 230, color.b + 230);
+  doc.roundedRect(15, y, 180, 15 + (items.length * 8), 3, 3, 'FD');
+  
+  // Title
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(color.r, color.g, color.b);
+  doc.text(title, 20, y + 8);
+  
+  // Divider
+  doc.setDrawColor(color.r, color.g, color.b);
+  doc.setLineWidth(0.3);
+  doc.line(20, y + 11, 190, y + 11);
+  
+  // Items
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  items.forEach((item, idx) => {
+    doc.setTextColor(50, 50, 50);
+    doc.text(item.label, 25, y + 18 + (idx * 8));
+    doc.setTextColor(80, 80, 80);
+    doc.text(item.value, 80, y + 18 + (idx * 8));
+  });
+  
+  return y + 25 + (items.length * 8); // Return new Y position
+};
+
 const Reports = () => {
   const [activeTab, setActiveTab] = useState('daily');
   const [dailyReport, setDailyReport] = useState(null);

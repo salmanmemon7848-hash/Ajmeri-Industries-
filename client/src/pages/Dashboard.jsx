@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getDashboardSummary, getStock, getErrorMessage, resetAllData, getPaddyPurchases, getExpenses, getSales } from '../services/api';
+import { getDailyReport, getStock, getErrorMessage, resetAllData } from '../services/api';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -30,47 +30,28 @@ const Dashboard = () => {
     // Always stop loading first to prevent stuck loading screen
     setLoading(false);
     
-    // Fetch fresh data directly from API (which uses localStorage)
     try {
       setError(null);
       
-      const [paddyRes, expensesRes, salesRes, stockRes] = await Promise.all([
-        getPaddyPurchases(),
-        getExpenses(),
-        getSales(),
-        getStock()
-      ]);
+      // Fetch daily report from Supabase (includes ALL entry types)
+      const dailyReportRes = await getDailyReport();
+      const stockRes = await getStock();
       
-      const paddyData = paddyRes.data?.data || [];
-      const expensesData = expensesRes.data?.data || [];
-      const salesData = salesRes.data?.data || [];
+      const dailyData = dailyReportRes.data?.data || {};
       const stockData = stockRes.data?.data || {};
       
-      // Calculate today's data
-      const today = new Date().toDateString();
-      const todayPurchases = paddyData.filter(p => new Date(p.date).toDateString() === today).length;
-      const todayExpenses = expensesData
-        .filter(e => new Date(e.date).toDateString() === today)
-        .reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
-      const todaySales = salesData
-        .filter(s => new Date(s.date).toDateString() === today)
-        .reduce((sum, s) => sum + (parseFloat(s.totalAmount) || 0), 0);
-      
-      // Calculate monthly data
-      const monthlyExpenses = expensesData.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
-      const monthlySales = salesData.reduce((sum, s) => sum + (parseFloat(s.totalAmount) || 0), 0);
-      
+      // Use the daily report data directly
       const summaryData = {
         today: {
-          purchases: todayPurchases,
-          expenses: todayExpenses,
-          sales: todaySales,
-          milling: 0
+          purchases: dailyData.purchases?.count || 0,
+          expenses: dailyData.expenses?.total || 0,
+          sales: dailyData.sales?.total || 0,
+          milling: dailyData.milling?.totalQuantity || 0
         },
         monthly: {
-          totalExpenses: monthlyExpenses,
-          totalSales: monthlySales,
-          netProfit: monthlySales - monthlyExpenses
+          totalExpenses: 0, // Will be fetched separately if needed
+          totalSales: 0,
+          netProfit: 0
         }
       };
       
