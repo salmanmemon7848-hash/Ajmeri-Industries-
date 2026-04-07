@@ -481,6 +481,20 @@ export const resetAllData = async () => {
   return { data: { success: true, message: 'All data reset' } };
 };
 
+// Reset only paddy stock to 0
+export const resetPaddyStock = async () => {
+  const { error } = await supabase
+    .from('stock')
+    .update({
+      paddy_quantity: 0,
+      paddy_bags: 0
+    })
+    .eq('id', 1);
+  
+  if (error) throw error;
+  return { data: { success: true, message: 'Paddy stock reset to 0' } };
+};
+
 // Delete all data for specific sections
 export const deleteAllPurchases = async () => {
   const { error } = await supabase.from('purchases').delete().neq('id', 0);

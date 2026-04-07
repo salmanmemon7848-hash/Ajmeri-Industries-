@@ -49,7 +49,8 @@ import {
   deleteAllExpenses,
   deleteAllMilling,
   deleteAllPaddyPurchases,
-  deleteAllWorkers
+  deleteAllWorkers,
+  resetPaddyStock
 } from './supabase';
 
 // Re-export everything
@@ -101,7 +102,8 @@ export {
   deleteAllExpenses,
   deleteAllMilling,
   deleteAllPaddyPurchases,
-  deleteAllWorkers
+  deleteAllWorkers,
+  resetPaddyStock
 };
 
 export default { get: () => {}, post: () => {}, put: () => {}, delete: () => {} };
