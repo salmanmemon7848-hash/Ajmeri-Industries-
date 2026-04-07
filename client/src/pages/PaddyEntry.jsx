@@ -236,7 +236,7 @@ const PaddyEntry = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Total Bags</label>
               <div className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg font-bold text-green-700">
-                {totalBags.toFixed(2)} Qu
+                {totalBags.toFixed(2)} Bag
               </div>
             </div>
           </div>
@@ -343,7 +343,7 @@ const PaddyEntry = () => {
               </div>
               <div className="flex justify-between border-t pt-2">
                 <span className="text-gray-800 font-medium">Total Bags:</span>
-                <span className="font-bold text-green-700">{totalBags.toFixed(2)} Qu</span>
+                <span className="font-bold text-green-700">{totalBags.toFixed(2)} Bag</span>
               </div>
               <div className="flex justify-between border-t pt-2">
                 <span className="text-gray-800 font-medium">Total Quintal:</span>

@@ -88,7 +88,7 @@ export const generatePaddyPDF = (data) => {
     ['Source/Farmer:', data.farmerName || data.source],
     ['New Bags:', `${data.newQuantity || 0} Bag`],
     ['Old Bags:', `${data.oldQuantity || 0} Bag`],
-    ['Total Bags:', `${(parseFloat(data.newQuantity) + parseFloat(data.oldQuantity)).toFixed(2)} Qu`],
+    ['Total Bags:', `${(parseFloat(data.newQuantity) + parseFloat(data.oldQuantity)).toFixed(2)} Bag`],
     ['Total Quintal:', `${data.totalQuintal || ((parseFloat(data.newQuantity) + parseFloat(data.oldQuantity)) / 2.5).toFixed(2)} Qu`],
     ['Rice Mill Hamali:', `₹${data.riceMillHamali || 0}`],
     ['Warehouse Hamali:', `₹${data.warehouseHamali || 0}`],
