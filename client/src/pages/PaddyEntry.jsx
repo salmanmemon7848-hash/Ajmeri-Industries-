@@ -203,7 +203,7 @@ const PaddyEntry = () => {
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                New Bags (Qu) <span className="text-red-500">*</span>
+                New Bags (Bag) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -219,7 +219,7 @@ const PaddyEntry = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Old Bags (Qu) <span className="text-red-500">*</span>
+                Old Bags (Bag) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -335,11 +335,11 @@ const PaddyEntry = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">New Bags:</span>
-                <span className="font-medium">{formData.newBags || 0} Qu</span>
+                <span className="font-medium">{formData.newBags || 0} Bag</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Old Bags:</span>
-                <span className="font-medium">{formData.oldBags || 0} Qu</span>
+                <span className="font-medium">{formData.oldBags || 0} Bag</span>
               </div>
               <div className="flex justify-between border-t pt-2">
                 <span className="text-gray-800 font-medium">Total Bags:</span>

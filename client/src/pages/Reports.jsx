@@ -549,8 +549,8 @@ const Reports = () => {
         const totalQuintal = item.totalQuintal || ((item.totalQuantity || 0) / 2.5).toFixed(2);
         
         y = createColorfulSection(doc, y, `${item.farmerName || item.source || 'N/A'} - ${new Date(item.date).toLocaleDateString()}`, [
-          { label: 'New Bags:', value: `${item.newQuantity || 0} Qu` },
-          { label: 'Old Bags:', value: `${item.oldQuantity || 0} Qu` },
+          { label: 'New Bags:', value: `${item.newQuantity || 0} Bag` },
+          { label: 'Old Bags:', value: `${item.oldQuantity || 0} Bag` },
           { label: 'Total Bags:', value: `${item.totalQuantity || 0} Qu` },
           { label: 'Total Quintal:', value: `${totalQuintal} Qu` },
           { label: 'Hamali:', value: `₹${item.totalHamali || 0}` },
@@ -998,8 +998,8 @@ const Reports = () => {
                         <tr key={index} className="hover:bg-gray-50">
                           <td className="px-4 py-3 text-sm">{new Date(item.date).toLocaleDateString()}</td>
                           <td className="px-4 py-3 text-sm font-medium">{item.farmerName || item.source || 'N/A'}</td>
-                          <td className="px-4 py-3 text-sm">{item.newQuantity || 0} Qu</td>
-                          <td className="px-4 py-3 text-sm">{item.oldQuantity || 0} Qu</td>
+                          <td className="px-4 py-3 text-sm">{item.newQuantity || 0} Bag</td>
+                          <td className="px-4 py-3 text-sm">{item.oldQuantity || 0} Bag</td>
                           <td className="px-4 py-3 text-sm font-medium">{item.totalQuantity || 0} Qu</td>
                           <td className="px-4 py-3 text-sm font-bold text-green-700">{item.totalQuintal || ((item.totalQuantity || 0) / 2.5).toFixed(2)} Qu</td>
                           <td className="px-4 py-3 text-sm">₹{item.totalHamali || 0}</td>
